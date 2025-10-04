@@ -1,13 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { adminAPI } from '@/lib/api';
-
-interface AdminMetrics {
-  pendingApplications: number;
-  pendingCourses: number;
-  totalCreators: number;
-  totalCourses: number;
-  publishedCourses: number;
-}
+import { adminAPI, type AdminMetrics } from '@/lib/api';
 
 interface UseAdminMetricsReturn {
   metrics: AdminMetrics | null;

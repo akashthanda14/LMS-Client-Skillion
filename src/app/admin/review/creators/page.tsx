@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Loader2, AlertCircle, CheckCircle, UserCheck } from 'lucide-react';
 import { AuthenticatedLayout } from '@/components/auth/AuthenticatedLayout';
@@ -8,37 +8,18 @@ import { CreatorApplicationCard } from '@/components/admin/CreatorApplicationCar
 import { ApprovalModal } from '@/components/admin/ApprovalModal';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { adminAPI, PendingApplication } from '@/lib/api';
+import { usePendingApplications } from '@/hooks/usePendingApplications';
+import { PendingApplication } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
 export default function ReviewCreatorsPage() {
   const router = useRouter();
-  const [applications, setApplications] = useState<PendingApplication[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string>('');
+  const { applications, isLoading, error, approveApplication, rejectApplication } = usePendingApplications();
   const [selectedApp, setSelectedApp] = useState<PendingApplication | null>(null);
   const [modalType, setModalType] = useState<'approve' | 'reject'>('approve');
   const [showModal, setShowModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string>('');
-
-  const fetchApplications = async () => {
-    try {
-      setIsLoading(true);
-      setError('');
-      const response = await adminAPI.getApplications('PENDING');
-      setApplications(response.data);
-    } catch (err: any) {
-      console.error('Failed to load applications:', err);
-      const errorMessage = err.response?.data?.message || 'Failed to load applications';
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchApplications();
-  }, []);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const handleApprove = (id: string) => {
     const app = applications.find((a) => a.id === id);
@@ -62,16 +43,14 @@ export default function ReviewCreatorsPage() {
     if (!selectedApp) return;
 
     try {
+      setActionLoading(true);
       if (modalType === 'approve') {
-        await adminAPI.approveApplication(selectedApp.id, { comments });
+        await approveApplication(selectedApp.id);
         setSuccessMessage(`✓ Approved ${selectedApp.name}'s application`);
       } else {
-        await adminAPI.rejectApplication(selectedApp.id, { comments });
+        await rejectApplication(selectedApp.id, comments);
         setSuccessMessage(`✓ Rejected ${selectedApp.name}'s application`);
       }
-
-      // Refresh the list
-      await fetchApplications();
 
       // Clear success message after 5 seconds
       setTimeout(() => setSuccessMessage(''), 5000);
@@ -79,6 +58,8 @@ export default function ReviewCreatorsPage() {
       console.error('Action failed:', err);
       alert(err.response?.data?.message || 'Action failed. Please try again.');
       throw err; // Re-throw to keep modal open
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -159,9 +140,6 @@ export default function ReviewCreatorsPage() {
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
-            <Button onClick={fetchApplications} className="mt-4">
-              Try Again
-            </Button>
           </motion.div>
         )}
 

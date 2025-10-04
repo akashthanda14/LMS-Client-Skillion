@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Loader2, AlertCircle, CheckCircle, BookCheck } from 'lucide-react';
 import { AuthenticatedLayout } from '@/components/auth/AuthenticatedLayout';
@@ -8,37 +8,18 @@ import { CourseReviewCard } from '@/components/admin/CourseReviewCard';
 import { ApprovalModal } from '@/components/admin/ApprovalModal';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { adminAPI, PendingCourse } from '@/lib/api';
+import { usePendingCourses } from '@/hooks/usePendingCourses';
+import { PendingCourse } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
 export default function ReviewCoursesPage() {
   const router = useRouter();
-  const [courses, setCourses] = useState<PendingCourse[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string>('');
+  const { courses, isLoading, error, publishCourse, rejectCourse } = usePendingCourses();
   const [selectedCourse, setSelectedCourse] = useState<PendingCourse | null>(null);
   const [modalType, setModalType] = useState<'approve' | 'reject'>('approve');
   const [showModal, setShowModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string>('');
-
-  const fetchCourses = async () => {
-    try {
-      setIsLoading(true);
-      setError('');
-      const response = await adminAPI.getPendingCourses('PENDING');
-      setCourses(response.data);
-    } catch (err: any) {
-      console.error('Failed to load courses:', err);
-      const errorMessage = err.response?.data?.message || 'Failed to load pending courses';
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCourses();
-  }, []);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const handlePublish = (id: string) => {
     const course = courses.find((c) => c.id === id);
@@ -62,16 +43,14 @@ export default function ReviewCoursesPage() {
     if (!selectedCourse) return;
 
     try {
+      setActionLoading(true);
       if (modalType === 'approve') {
-        await adminAPI.publishCourse(selectedCourse.id, { comments });
+        await publishCourse(selectedCourse.id);
         setSuccessMessage(`✓ Published "${selectedCourse.title}"`);
       } else {
-        await adminAPI.rejectCourse(selectedCourse.id, { comments });
+        await rejectCourse(selectedCourse.id, comments);
         setSuccessMessage(`✓ Rejected "${selectedCourse.title}"`);
       }
-
-      // Refresh the list
-      await fetchCourses();
 
       // Clear success message after 5 seconds
       setTimeout(() => setSuccessMessage(''), 5000);
@@ -79,6 +58,8 @@ export default function ReviewCoursesPage() {
       console.error('Action failed:', err);
       alert(err.response?.data?.message || 'Action failed. Please try again.');
       throw err; // Re-throw to keep modal open
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -159,9 +140,6 @@ export default function ReviewCoursesPage() {
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
-            <Button onClick={fetchCourses} className="mt-4">
-              Try Again
-            </Button>
           </motion.div>
         )}
 

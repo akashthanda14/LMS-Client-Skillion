@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2, AlertCircle, UserCheck, BookCheck, ArrowRight } from 'lucide-react';
 import { AuthenticatedLayout } from '@/components/auth/AuthenticatedLayout';
@@ -8,33 +7,12 @@ import { AdminMetrics } from '@/components/admin/AdminMetrics';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { adminAPI, AdminMetrics as AdminMetricsType } from '@/lib/api';
+import { useAdminMetrics } from '@/hooks/useAdminMetrics';
 import { useRouter } from 'next/navigation';
 
 export default function AdminDashboardPage() {
   const router = useRouter();
-  const [metrics, setMetrics] = useState<AdminMetricsType | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string>('');
-
-  const fetchMetrics = async () => {
-    try {
-      setIsLoading(true);
-      setError('');
-      const response = await adminAPI.getMetrics();
-      setMetrics(response.data);
-    } catch (err: any) {
-      console.error('Failed to load metrics:', err);
-      const errorMessage = err.response?.data?.message || 'Failed to load dashboard metrics';
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchMetrics();
-  }, []);
+  const { metrics, isLoading, error, refetch } = useAdminMetrics();
 
   if (isLoading) {
     return (
@@ -68,8 +46,24 @@ export default function AdminDashboardPage() {
                 {error || 'Failed to load dashboard'}
               </AlertDescription>
             </Alert>
-            <Button onClick={fetchMetrics}>Try Again</Button>
+            <Button onClick={refetch}>Try Again</Button>
           </motion.div>
+        </div>
+      </AuthenticatedLayout>
+    );
+  }
+
+  if (!metrics) {
+    return (
+      <AuthenticatedLayout allowedRoles={['ADMIN']}>
+        <div className="max-w-4xl mx-auto py-12">
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              No metrics data available
+            </AlertDescription>
+          </Alert>
+          <Button onClick={refetch} className="mt-4">Reload</Button>
         </div>
       </AuthenticatedLayout>
     );
