@@ -713,6 +713,12 @@ export const courseAPI = {
     return response.data;
   },
 
+  // Delete course (CREATOR only, DRAFT only)
+  deleteCourse: async (courseId: string): Promise<{ success: boolean; message: string }> => {
+    const response = await api.delete<{ success: boolean; message: string }>(`/api/courses/${courseId}`);
+    return response.data;
+  },
+
   // Get Cloudinary upload credentials
   getUploadCredentials: async (courseId: string): Promise<GetUploadCredentialsResponse> => {
     const response = await api.post<GetUploadCredentialsResponse>(`/api/courses/${courseId}/lessons/upload`, {});
@@ -749,6 +755,15 @@ export const lessonAPI = {
   // Delete lesson
   deleteLesson: async (lessonId: string): Promise<DeleteLessonResponse> => {
     const response = await api.delete<DeleteLessonResponse>(`/api/lessons/${lessonId}`);
+    return response.data;
+  },
+
+  // Get transcript status
+  getTranscriptStatus: async (lessonId: string): Promise<{ 
+    success: boolean; 
+    data: { status: string; progress?: number; transcriptUrl?: string } 
+  }> => {
+    const response = await api.get(`/api/lessons/${lessonId}/transcript-status`);
     return response.data;
   },
 };
@@ -850,6 +865,12 @@ export const creatorAPI = {
       xhr.open('POST', credentials.uploadUrl);
       xhr.send(formData);
     });
+  },
+
+  // Persist uploaded thumbnail URL to course
+  updateThumbnail: async (courseId: string, thumbnailUrl: string): Promise<UpdateCourseResponse> => {
+    const response = await api.patch<UpdateCourseResponse>(`/api/courses/${courseId}/thumbnail`, { thumbnailUrl });
+    return response.data;
   },
 };
 
