@@ -93,18 +93,12 @@ interface AuthContextType extends AuthState {
   // Profile
   checkAuth: () => Promise<void>;
   updateProfile: (name: string) => Promise<void>;
+  updateUser: (user: User) => void;
   
   // Password management
   forgotPassword: (emailOrPhone: string) => Promise<void>;
   resetPassword: (emailOrPhone: string, otp: string, newPassword: string) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
-  
-  // Profile picture (to be implemented)
-  // uploadProfilePicture: (file: File) => Promise<string>;
-  
-  // Email/Phone changes (to be implemented)
-  // changeEmail: (newEmail: string, password: string) => Promise<void>;
-  // changePhoneNumber: (newPhoneNumber: string, password: string) => Promise<void>;
   
   // Manual sync helper
   manualSyncToCookie: () => boolean;
@@ -342,6 +336,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  // Manual update user (for profile changes from other APIs)
+  const updateUser = useCallback((user: User) => {
+    localStorage.setItem('auth-user', JSON.stringify(user));
+    dispatch({
+      type: 'SET_USER',
+      payload: { user, token: state.token! }
+    });
+  }, [state.token]);
+
   const contextValue: AuthContextType = {
     ...state,
     register,
@@ -353,6 +356,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     logout,
     checkAuth: checkAuthImpl,
     updateProfile,
+    updateUser,
     forgotPassword,
     resetPassword,
     changePassword,
