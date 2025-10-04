@@ -777,6 +777,79 @@ export const creatorAPI = {
     const response = await api.post<CreateCourseResponse>('/api/courses', data);
     return response.data;
   },
+
+  // Get thumbnail upload credentials
+  getThumbnailUploadCredentials: async (courseId: string): Promise<GetUploadCredentialsResponse> => {
+    const response = await api.post<GetUploadCredentialsResponse>(`/api/courses/${courseId}/thumbnail/upload`, {});
+    return response.data;
+  },
+
+  // Upload thumbnail to Cloudinary
+  uploadThumbnail: async (credentials: any, file: File, onProgress?: (progress: number) => void): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('api_key', credentials.apiKey);
+    formData.append('timestamp', credentials.timestamp);
+    formData.append('signature', credentials.signature);
+    formData.append('public_id', credentials.publicId);
+    formData.append('folder', credentials.folder);
+    formData.append('eager', 'c_fill,w_1200,h_675/q_auto');
+
+    const response = await fetch(credentials.uploadUrl, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error('Thumbnail upload failed');
+    }
+
+    const result = await response.json();
+    return result.secure_url;
+  },
+
+  // Upload video to Cloudinary with progress tracking
+  uploadVideo: async (credentials: any, file: File, onProgress?: (progress: number) => void): Promise<{ url: string; duration: number }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('api_key', credentials.apiKey);
+    formData.append('timestamp', credentials.timestamp);
+    formData.append('signature', credentials.signature);
+    formData.append('public_id', credentials.publicId);
+    formData.append('folder', credentials.folder);
+    formData.append('resource_type', 'video');
+
+    const xhr = new XMLHttpRequest();
+
+    return new Promise((resolve, reject) => {
+      if (onProgress) {
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const percentage = (e.loaded / e.total) * 100;
+            onProgress(percentage);
+          }
+        });
+      }
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          const result = JSON.parse(xhr.responseText);
+          resolve({
+            url: result.secure_url,
+            duration: result.duration || 0,
+          });
+        } else {
+          reject(new Error('Video upload failed'));
+        }
+      });
+
+      xhr.addEventListener('error', () => reject(new Error('Upload failed')));
+      xhr.addEventListener('abort', () => reject(new Error('Upload cancelled')));
+
+      xhr.open('POST', credentials.uploadUrl);
+      xhr.send(formData);
+    });
+  },
 };
 
 // Admin API functions
