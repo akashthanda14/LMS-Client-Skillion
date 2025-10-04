@@ -817,7 +817,9 @@ export const creatorAPI = {
     });
 
     if (!response.ok) {
-      throw new Error('Thumbnail upload failed');
+      const errorText = await response.text();
+      console.error('Cloudinary thumbnail upload failed:', response.status, errorText);
+      throw new Error(`Thumbnail upload failed with status ${response.status}`);
     }
 
     const result = await response.json();
@@ -855,7 +857,8 @@ export const creatorAPI = {
             duration: result.duration || 0,
           });
         } else {
-          reject(new Error('Video upload failed'));
+          console.error('Cloudinary video upload failed:', xhr.status, xhr.responseText);
+          reject(new Error(`Video upload failed with status ${xhr.status}`));
         }
       });
 

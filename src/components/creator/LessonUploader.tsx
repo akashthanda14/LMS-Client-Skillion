@@ -80,6 +80,8 @@ export function LessonUploader({ courseId, lessonOrder, onUploadComplete }: Less
       formData.append('timestamp', credentials.timestamp.toString());
       formData.append('signature', credentials.signature);
       formData.append('public_id', credentials.publicId);
+      formData.append('folder', credentials.folder);
+      formData.append('resource_type', credentials.resourceType || 'video');
 
       const xhr = new XMLHttpRequest();
 
@@ -95,7 +97,8 @@ export function LessonUploader({ courseId, lessonOrder, onUploadComplete }: Less
           const response = JSON.parse(xhr.responseText);
           resolve(response.secure_url);
         } else {
-          reject(new Error('Upload failed'));
+          console.error('Cloudinary upload failed:', xhr.status, xhr.responseText);
+          reject(new Error(`Upload failed with status ${xhr.status}`));
         }
       });
 
