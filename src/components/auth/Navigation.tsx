@@ -31,23 +31,18 @@ const navigationItems: NavigationItem[] = [
     roles: ['LEARNER', 'CREATOR', 'ADMIN'],
   },
   {
-    label: 'Create Course',
-    href: '/courses/create',
-    roles: ['CREATOR', 'ADMIN'],
+    label: 'My Progress',
+    href: '/progress',
+    roles: ['LEARNER', 'CREATOR', 'ADMIN'],
   },
   {
-    label: 'Course Management',
-    href: '/courses/manage',
+    label: 'Creator Dashboard',
+    href: '/creator/dashboard',
     roles: ['CREATOR', 'ADMIN'],
   },
   {
     label: 'Admin Panel',
-    href: '/admin',
-    roles: ['ADMIN'],
-  },
-  {
-    label: 'Users',
-    href: '/admin/users',
+    href: '/admin/dashboard',
     roles: ['ADMIN'],
   },
 ];
@@ -127,9 +122,9 @@ export function Navigation() {
           {/* User Info and Logout */}
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-3">
-              <span className="text-sm font-medium text-gray-700">
+              <Link href="/profile" className="text-sm font-medium text-gray-700 hover:text-blue-600">
                 {user.name}
-              </span>
+              </Link>
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(user.role)}`}>
                 {user.role.toLowerCase()}
               </span>
