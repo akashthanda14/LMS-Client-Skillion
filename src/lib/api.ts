@@ -514,6 +514,7 @@ export interface AdminMetrics {
   totalUsers: number;
   totalCreators: number;
   totalCourses: number;
+  publishedCourses: number;
   totalEnrollments: number;
   pendingApplications: number;
   pendingCourses: number;
