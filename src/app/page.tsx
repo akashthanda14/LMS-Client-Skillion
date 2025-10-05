@@ -56,7 +56,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen w-full">
       {/* Hero Section with Brand Background */}
       <div className="relative bg-gradient-to-br from-[var(--brand-600)] via-[var(--brand-500)] to-[var(--brand-400)] text-white overflow-hidden">
         <div className="absolute inset-0 opacity-10">
@@ -64,7 +64,7 @@ export default function Home() {
           <div className="absolute bottom-0 -right-4 w-96 h-96 bg-white rounded-full mix-blend-multiply filter blur-xl animate-pulse delay-700"></div>
         </div>
         
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
+        <div className="relative w-full px-6 lg:px-12 py-20 sm:py-28">
           <div className="text-center max-w-4xl mx-auto">
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
@@ -108,7 +108,7 @@ export default function Home() {
 
       {/* Features Section */}
       <div className="bg-white py-16 sm:py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-6 lg:px-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -172,7 +172,7 @@ export default function Home() {
 
       {/* Stats Section */}
       <div className="bg-gray-50 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-6 lg:px-12">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}

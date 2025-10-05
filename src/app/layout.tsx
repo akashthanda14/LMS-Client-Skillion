@@ -32,11 +32,9 @@ export default function RootLayout({
         <AuthProvider>
           <CourseProvider>
             <ToastProvider>
-              <div className="relative min-h-screen">
+              <div className="relative min-h-screen w-full">
                 <BrandOrbs />
-                <div className="container max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
-                  {children}
-                </div>
+                {children}
               </div>
             </ToastProvider>
           </CourseProvider>

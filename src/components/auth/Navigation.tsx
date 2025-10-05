@@ -98,7 +98,7 @@ export function Navigation() {
     >
       {/* Main Navigation Bar - Full Width */}
       <div className="w-full border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-6 lg:px-12">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center flex-shrink-0">
