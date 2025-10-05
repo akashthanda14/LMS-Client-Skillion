@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/toast';
 import { User } from '@/lib/api';
-import { Search, Menu, X } from 'lucide-react';
-import { useState, FormEvent } from 'react';
+import { Search, Menu, X, TrendingUp } from 'lucide-react';
+import { useState, FormEvent, useEffect } from 'react';
+import { progressAPI } from '@/lib/api';
 
 interface NavigationItem {
   label: string;
@@ -16,38 +17,99 @@ interface NavigationItem {
   roles: User['role'][];
 }
 
-const navigationItems: NavigationItem[] = [
+// Role-specific navigation items
+const learnerNavItems: NavigationItem[] = [
   {
     label: 'Dashboard',
     href: '/dashboard',
-    roles: ['LEARNER', 'CREATOR', 'ADMIN'],
+    roles: ['LEARNER'],
   },
   {
     label: 'Browse Courses',
     href: '/courses',
-    roles: ['LEARNER', 'CREATOR', 'ADMIN'],
+    roles: ['LEARNER'],
   },
   {
     label: 'My Learning',
     href: '/my-courses',
-    roles: ['LEARNER', 'CREATOR', 'ADMIN'],
+    roles: ['LEARNER'],
   },
   {
     label: 'My Progress',
     href: '/progress',
-    roles: ['LEARNER', 'CREATOR', 'ADMIN'],
+    roles: ['LEARNER'],
   },
+  {
+    label: 'Certificates',
+    href: '/certificates',
+    roles: ['LEARNER'],
+  },
+];
+
+const creatorNavItems: NavigationItem[] = [
   {
     label: 'Creator Dashboard',
     href: '/creator/dashboard',
-    roles: ['CREATOR', 'ADMIN'],
+    roles: ['CREATOR'],
   },
   {
-    label: 'Admin Panel',
+    label: 'My Courses',
+    href: '/creator/courses', // distinct route for course management
+    roles: ['CREATOR'],
+  },
+  {
+    label: 'Browse Courses',
+    href: '/courses',
+    roles: ['CREATOR'],
+  },
+  {
+    label: 'Analytics',
+    href: '/creator/analytics', // dedicated analytics page
+    roles: ['CREATOR'],
+  },
+];
+
+const adminNavItems: NavigationItem[] = [
+  {
+    label: 'Admin Dashboard',
     href: '/admin/dashboard',
     roles: ['ADMIN'],
   },
+  {
+    label: 'Review Creators',
+    href: '/admin/review/creators',
+    roles: ['ADMIN'],
+  },
+  {
+    label: 'Review Courses',
+    href: '/admin/review/courses',
+    roles: ['ADMIN'],
+  },
+  {
+    label: 'Analytics',
+    href: '/admin/analytics',
+    roles: ['ADMIN'],
+  },
+  {
+    label: 'All Courses',
+    href: '/courses',
+    roles: ['ADMIN'],
+  },
 ];
+
+// Get navigation items based on user role
+const getNavigationItems = (role: User['role']): NavigationItem[] => {
+  switch (role) {
+    case 'LEARNER':
+      return learnerNavItems;
+    case 'CREATOR':
+      return creatorNavItems;
+    case 'ADMIN':
+      return adminNavItems;
+    default:
+      return learnerNavItems;
+  }
+};
 
 export function Navigation() {
   const { user, logout } = useAuth();
@@ -55,8 +117,32 @@ export function Navigation() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [overallProgress, setOverallProgress] = useState<number | null>(null);
 
   if (!user) return null;
+
+  // Fetch overall progress for learners
+  useEffect(() => {
+    if (user.role === 'LEARNER') {
+      const fetchProgress = async () => {
+        try {
+          const response = await progressAPI.getProgress();
+          if (response.data.enrollments && response.data.enrollments.length > 0) {
+            // Calculate average progress across all enrollments
+            const totalProgress = response.data.enrollments.reduce((sum: number, enrollment: any) => {
+              const progress = typeof enrollment.progress === 'number' ? enrollment.progress : 0;
+              return sum + progress;
+            }, 0);
+            const avgProgress = Math.round(totalProgress / response.data.enrollments.length);
+            setOverallProgress(avgProgress);
+          }
+        } catch (error) {
+          console.error('Failed to fetch progress:', error);
+        }
+      };
+      fetchProgress();
+    }
+  }, [user.role]);
 
   const handleLogout = () => {
     logout();
@@ -72,9 +158,8 @@ export function Navigation() {
     }
   };
 
-  const filteredNavItems = navigationItems.filter(item =>
-    item.roles.includes(user.role)
-  );
+  // Get role-specific navigation items
+  const navItems = getNavigationItems(user.role);
 
   const getRoleBadgeColor = (role: User['role']) => {
     switch (role) {
@@ -130,9 +215,10 @@ export function Navigation() {
 
             {/* Desktop Navigation & User Info */}
             <div className="hidden md:flex items-center space-x-6">
-              {filteredNavItems.slice(0, 3).map((item, index) => (
+              {navItems.slice(0, 3).map((item, index) => (
                 <motion.div
-                  key={item.href}
+                  // Use composite key to avoid duplicate keys when multiple labels share same href
+                  key={`${item.href}-${item.label}`}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
@@ -190,6 +276,34 @@ export function Navigation() {
         </form>
       </div>
 
+      {/* Progress Bar for Learners */}
+      {user.role === 'LEARNER' && overallProgress !== null && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          transition={{ duration: 0.3 }}
+          className="bg-[var(--brand-700)] border-t border-white/10"
+        >
+          <div className="w-full px-6 lg:px-12 py-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-white/80" />
+                <span className="text-sm font-medium text-white/90">Overall Progress</span>
+              </div>
+              <span className="text-sm font-semibold text-white">{overallProgress}%</span>
+            </div>
+            <div className="relative w-full h-2 bg-white/20 rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${overallProgress}%` }}
+                transition={{ duration: 0.8, ease: 'easeOut' }}
+                className="absolute top-0 left-0 h-full bg-gradient-to-r from-green-400 to-blue-400 rounded-full"
+              />
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Mobile Navigation Menu */}
       {isMobileMenuOpen && (
         <motion.div
@@ -199,9 +313,10 @@ export function Navigation() {
           className="md:hidden bg-[var(--brand-600)] border-t border-white/10"
         >
           <div className="px-4 pt-2 pb-3 space-y-1">
-            {filteredNavItems.map((item) => (
+            {navItems.map((item) => (
               <Link
-                key={item.href}
+                // Composite key ensures uniqueness even if hrefs repeat
+                key={`${item.href}-${item.label}`}
                 href={item.href}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="text-white/90 hover:text-white hover:bg-white/10 block px-3 py-2 rounded-md text-base font-medium transition-colors"

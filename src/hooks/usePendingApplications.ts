@@ -22,10 +22,22 @@ export function usePendingApplications(): UsePendingApplicationsReturn {
     try {
       setIsLoading(true);
       setError(null);
+      console.log('🔍 Fetching pending applications...');
       const response = await adminAPI.getApplicationsPending();
-      setApplications(response.data.applications || []);
+      console.log('📦 Raw API response:', response);
+      
+      // Handle both response formats:
+      // 1. { success: true, data: { applications: [...] } }
+      // 2. { success: true, applications: [...] }
+      const apps = response.data?.applications || (response as any).applications || [];
+      
+      console.log('✅ Parsed applications:', apps);
+      console.log('📊 Total applications:', apps.length);
+      
+      setApplications(apps);
     } catch (err: any) {
-      console.error('Failed to fetch pending applications:', err);
+      console.error('❌ Failed to fetch pending applications:', err);
+      console.error('Error response:', err.response?.data);
       setError(err.response?.data?.message || 'Failed to load applications');
     } finally {
       setIsLoading(false);

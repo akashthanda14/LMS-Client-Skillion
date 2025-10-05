@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import { AuthenticatedLayout } from '@/components/auth/AuthenticatedLayout';
 import { CreatorStats } from '@/components/creator/CreatorStats';
 import { CreatorDashboard } from '@/components/creator/CreatorDashboard';
-import { CourseCreationModal } from '@/components/creator/CourseCreationModal';
 import { Button } from '@/components/ui/button';
 import { creatorAPI, CreatorDashboardResponse } from '@/lib/api';
 import { Plus, Loader2, AlertCircle } from 'lucide-react';
@@ -16,7 +15,6 @@ export default function CreatorDashboardPage() {
   const [dashboardData, setDashboardData] = useState<CreatorDashboardResponse['dashboard'] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const router = useRouter();
 
   const fetchDashboard = async () => {
@@ -100,7 +98,7 @@ export default function CreatorDashboardPage() {
             <p className="text-gray-600 mt-1">Manage your courses and track your impact</p>
           </div>
           <Button
-            onClick={() => setShowCreateModal(true)}
+            onClick={() => router.push('/creator/courses/new')}
             className="flex items-center gap-2"
             size="lg"
           >
@@ -121,12 +119,7 @@ export default function CreatorDashboardPage() {
           <CreatorDashboard courses={dashboardData.courses} />
         </motion.div>
 
-        {/* Course Creation Modal */}
-        <CourseCreationModal
-          isOpen={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
-          onSuccess={handleCourseCreated}
-        />
+  {/* Creation modal removed in favor of dedicated route /creator/courses/new */}
       </div>
     </AuthenticatedLayout>
   );

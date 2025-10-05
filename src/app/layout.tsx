@@ -5,6 +5,7 @@ import BrandOrbs from '@/components/presentational/BrandOrbs';
 import { ToastProvider } from "@/components/ui/toast";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CourseProvider } from "@/contexts/CourseContext";
+import { AppQueryProvider } from "@/contexts/QueryClientProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,12 +32,14 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthProvider>
           <CourseProvider>
-            <ToastProvider>
-              <div className="relative min-h-screen w-full">
-                <BrandOrbs />
-                {children}
-              </div>
-            </ToastProvider>
+            <AppQueryProvider>
+              <ToastProvider>
+                <div className="relative min-h-screen w-full">
+                  <BrandOrbs />
+                  {children}
+                </div>
+              </ToastProvider>
+            </AppQueryProvider>
           </CourseProvider>
         </AuthProvider>
       </body>

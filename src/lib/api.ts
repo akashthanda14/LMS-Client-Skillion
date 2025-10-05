@@ -1397,4 +1397,89 @@ export const progressAPI = {
   },
 };
 
+// Transcript API Types
+export interface TranscriptSegment {
+  id: string;
+  startTime: number;
+  endTime: number;
+  text: string;
+}
+
+export interface TranscriptStatus {
+  status: 'completed' | 'active' | 'waiting' | 'failed' | 'not_queued' | 'unknown';
+  transcript?: string;
+  progress?: number;
+  jobId?: string;
+  lessonId: string;
+  error?: string | null;
+  attempts?: number;
+  message?: string;
+}
+
+export interface TranscriptStatusResponse {
+  success: boolean;
+  data: TranscriptStatus;
+}
+
+export interface GetLessonResponse {
+  success: boolean;
+  lesson: LessonDetail;
+}
+
+export interface GenerateTranscriptResponse {
+  success: boolean;
+  message: string;
+  data: {
+    lessonId: string;
+    transcript?: string;
+    segments?: TranscriptSegment[];
+    language: string;
+    createdAt: string;
+  };
+}
+
+export interface UpdateTranscriptResponse {
+  success: boolean;
+  message: string;
+  data: {
+    lessonId: string;
+    transcript: string;
+    updatedAt: string;
+  };
+}
+
+// Transcript API Methods
+export const transcriptAPI = {
+  // Get transcript status for a lesson (for polling)
+  getTranscriptStatus: async (lessonId: string): Promise<TranscriptStatusResponse> => {
+    const response = await api.get(`/api/lessons/${lessonId}/transcript-status`);
+    return response.data;
+  },
+
+  // Get lesson with transcript
+  getLessonWithTranscript: async (lessonId: string): Promise<GetLessonResponse> => {
+    const response = await api.get(`/api/lessons/${lessonId}`);
+    return response.data;
+  },
+
+  // Generate transcript (for creators)
+  generateTranscript: async (lessonId: string, videoUrl: string): Promise<GenerateTranscriptResponse> => {
+    const response = await api.post(`/api/lessons/${lessonId}/transcript/generate`, {
+      videoUrl
+    });
+    return response.data;
+  },
+
+  // Update transcript (for creators)
+  updateTranscript: async (
+    lessonId: string,
+    transcript: string
+  ): Promise<UpdateTranscriptResponse> => {
+    const response = await api.put(`/api/lessons/${lessonId}/transcript`, {
+      transcript
+    });
+    return response.data;
+  }
+};
+
 export default api;

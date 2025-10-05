@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use as usePromise } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
@@ -14,13 +14,14 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { courseAPI, CourseDetail, LessonDetail } from '@/lib/api';
 
+// Next.js App Router: params is now delivered as a Promise and must be unwrapped with React.use()
 interface CourseEditPageProps {
-  params: {
-    id: string;
-  };
+  params: Promise<{ id: string }>;
 }
 
 export default function CourseEditPage({ params }: CourseEditPageProps) {
+  // Unwrap the params promise (React 19 use(promise))
+  const { id } = usePromise(params);
   const router = useRouter();
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [lessons, setLessons] = useState<LessonDetail[]>([]);
@@ -33,11 +34,11 @@ export default function CourseEditPage({ params }: CourseEditPageProps) {
       setError('');
 
       // Fetch course details
-      const courseData = await courseAPI.getCourseById(params.id);
+      const courseData = await courseAPI.getCourseById(id);
       setCourse(courseData);
 
       // Fetch lessons
-      const lessonsResponse = await courseAPI.getCourseLessons(params.id);
+      const lessonsResponse = await courseAPI.getCourseLessons(id);
       setLessons(lessonsResponse.data || []);
     } catch (err: any) {
       console.error('Failed to load course:', err);
@@ -51,7 +52,8 @@ export default function CourseEditPage({ params }: CourseEditPageProps) {
 
   useEffect(() => {
     fetchCourseData();
-  }, [params.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   const handleCourseSubmitted = () => {
     // Show success message and redirect to dashboard
