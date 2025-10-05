@@ -336,14 +336,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  // Manual update user (for profile changes from other APIs)
+  // Manual update user (for profile changes or manual login like admin)
   const updateUser = useCallback((user: User) => {
-    localStorage.setItem('auth-user', JSON.stringify(user));
-    dispatch({
-      type: 'SET_USER',
-      payload: { user, token: state.token! }
-    });
-  }, [state.token]);
+    const token = localStorage.getItem('token');
+    if (token) {
+      localStorage.setItem('auth-user', JSON.stringify(user));
+      dispatch({
+        type: 'SET_USER',
+        payload: { user, token }
+      });
+    }
+  }, []);
 
   const contextValue: AuthContextType = {
     ...state,
