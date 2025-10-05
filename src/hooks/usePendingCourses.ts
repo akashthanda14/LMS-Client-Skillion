@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { adminAPI, type PendingCourse } from '@/lib/api';
+import { adminAPI, type CourseForReview } from '@/lib/api';
 
 interface UsePendingCoursesReturn {
-  courses: PendingCourse[];
+  courses: CourseForReview[];
   isLoading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
@@ -14,7 +14,7 @@ interface UsePendingCoursesReturn {
  * Custom hook for managing pending courses with optimistic updates
  */
 export function usePendingCourses(): UsePendingCoursesReturn {
-  const [courses, setCourses] = useState<PendingCourse[]>([]);
+  const [courses, setCourses] = useState<CourseForReview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,8 +22,8 @@ export function usePendingCourses(): UsePendingCoursesReturn {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await adminAPI.getPendingCourses('PENDING');
-      setCourses(response.data || []);
+      const response = await adminAPI.getCoursesPending();
+      setCourses(response.data.courses || []);
     } catch (err: any) {
       console.error('Failed to fetch pending courses:', err);
       setError(err.response?.data?.message || 'Failed to load courses');
@@ -42,7 +42,7 @@ export function usePendingCourses(): UsePendingCoursesReturn {
     setCourses(prev => prev.filter(c => c.id !== id));
 
     try {
-      await adminAPI.publishCourse(id, {});
+      await adminAPI.publishCourse(id);
       // Success - keep optimistic update
     } catch (err: any) {
       // Rollback on error
@@ -52,12 +52,17 @@ export function usePendingCourses(): UsePendingCoursesReturn {
   }, [courses]);
 
   const rejectCourse = useCallback(async (id: string, feedback: string) => {
+    // Validate feedback length (backend requires ≥10 characters)
+    if (feedback.trim().length < 10) {
+      throw new Error('Rejection feedback must be at least 10 characters');
+    }
+
     // Optimistic update: remove from list
     const originalCourses = [...courses];
     setCourses(prev => prev.filter(c => c.id !== id));
 
     try {
-      await adminAPI.rejectCourse(id, { comments: feedback });
+      await adminAPI.rejectCourse(id, { feedback });
       // Success - keep optimistic update
     } catch (err: any) {
       // Rollback on error
