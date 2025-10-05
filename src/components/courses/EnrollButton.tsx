@@ -12,10 +12,17 @@ interface EnrollButtonProps {
   courseId: string;
   isEnrolled: boolean;
   price?: number; // Optional since backend doesn't support pricing yet
+  onEnrollmentSuccess?: () => void;
   className?: string;
 }
 
-export function EnrollButton({ courseId, isEnrolled, price = 0, className }: EnrollButtonProps) {
+export function EnrollButton({ 
+  courseId, 
+  isEnrolled, 
+  price = 0, 
+  onEnrollmentSuccess,
+  className 
+}: EnrollButtonProps) {
   const { enrollInCourse, isEnrolling } = useCourses();
   const { isAuthenticated } = useAuth();
   const [showSuccess, setShowSuccess] = useState(false);
@@ -30,7 +37,16 @@ export function EnrollButton({ courseId, isEnrolled, price = 0, className }: Enr
     try {
       await enrollInCourse(courseId);
       setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 2000);
+      
+      // Call success callback
+      if (onEnrollmentSuccess) {
+        onEnrollmentSuccess();
+      }
+      
+      // Hide success message and refresh page after 1.5 seconds
+      setTimeout(() => {
+        setShowSuccess(false);
+      }, 1500);
     } catch (error) {
       // Error is handled in the store
       console.error('Enrollment failed:', error);

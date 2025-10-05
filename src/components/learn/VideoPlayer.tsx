@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import config from '@/lib/config'
 
 interface VideoPlayerProps {
   videoUrl: string;
@@ -32,8 +33,9 @@ export function VideoPlayer({ videoUrl, title, onVideoEnd }: VideoPlayerProps) {
     if (url.startsWith('http')) {
       return url;
     }
-    // Otherwise, construct Cloudinary URL
-    return `https://res.cloudinary.com/demo/video/upload/${url}`;
+    // Otherwise, construct Cloudinary URL using config
+    const cloudName = config.cloudinaryCloudName || 'demo'
+    return `https://res.cloudinary.com/${cloudName}/video/upload/${url}`;
   };
 
   return (

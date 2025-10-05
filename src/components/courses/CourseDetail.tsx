@@ -1,12 +1,13 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CourseDetail as CourseDetailType } from '@/lib/api';
+import { CourseDetail as CourseDetailType, courseAPI } from '@/lib/api';
 import { EnrollButton } from './EnrollButton';
-import { Clock, Users, BookOpen, CheckCircle, Play } from 'lucide-react';
+import { Clock, Users, BookOpen, CheckCircle, Play, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -15,6 +16,45 @@ interface CourseDetailProps {
 }
 
 export function CourseDetail({ course }: CourseDetailProps) {
+  const [enrollmentStatus, setEnrollmentStatus] = useState<{
+    enrolled: boolean;
+    progress?: number;
+    enrollmentId?: string;
+  }>({
+    enrolled: course.enrolled ?? course.isEnrolled ?? false,
+    progress: 0
+  });
+  const [checkingEnrollment, setCheckingEnrollment] = useState(false);
+
+  // Check enrollment status on mount and when course changes
+  useEffect(() => {
+    checkEnrollment();
+  }, [course.id]);
+
+  const checkEnrollment = async () => {
+    try {
+      setCheckingEnrollment(true);
+      const response = await courseAPI.checkEnrollmentStatus(course.id);
+      
+      if (response.success && response.data) {
+        setEnrollmentStatus({
+          enrolled: response.data.enrolled ?? false,
+          progress: response.data.enrollment?.progress,
+          enrollmentId: response.data.enrollment?.id
+        });
+      }
+    } catch (error) {
+      console.error('Error checking enrollment:', error);
+      // Keep current status if check fails
+    } finally {
+      setCheckingEnrollment(false);
+    }
+  };
+
+  const handleEnrollmentSuccess = () => {
+    // Refresh enrollment status after successful enrollment
+    checkEnrollment();
+  };
   const getLevelColor = (level: CourseDetailType['level']) => {
     switch (level) {
       case 'BEGINNER':
@@ -201,21 +241,48 @@ export function CourseDetail({ course }: CourseDetailProps) {
             <Card className="border-2 border-blue-100">
               <CardContent className="p-6">
                 <div className="space-y-6">
-                  {(course.isEnrolled || course.enrolled) ? (
-                    <Button
-                      asChild
-                      size="lg"
-                      className="w-full flex items-center gap-2"
-                    >
-                      <Link href={`/learn/${course.lessons[0]?.id}`}>
-                        <Play className="w-4 h-4" />
-                        Start Learning
-                      </Link>
+                  {checkingEnrollment ? (
+                    <Button disabled size="lg" className="w-full">
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      Checking enrollment...
                     </Button>
+                  ) : enrollmentStatus.enrolled ? (
+                    <div className="space-y-4">
+                      {/* Progress Bar */}
+                      {enrollmentStatus.progress !== undefined && enrollmentStatus.progress > 0 && (
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Your Progress</span>
+                            <span className="font-medium text-gray-900">
+                              {enrollmentStatus.progress.toFixed(1)}%
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div
+                              className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+                              style={{ width: `${enrollmentStatus.progress}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Start/Continue Learning Button */}
+                      <Button
+                        asChild
+                        size="lg"
+                        className="w-full flex items-center gap-2"
+                      >
+                        <Link href={`/learn/${course.lessons[0]?.id}`}>
+                          <Play className="w-4 h-4" />
+                          {enrollmentStatus.progress === 0 ? 'Start Learning' : 'Continue Learning'}
+                        </Link>
+                      </Button>
+                    </div>
                   ) : (
                     <EnrollButton
                       courseId={course.id}
-                      isEnrolled={course.isEnrolled || course.enrolled || false}
+                      isEnrolled={false}
+                      onEnrollmentSuccess={handleEnrollmentSuccess}
                       className="w-full"
                     />
                   )}
