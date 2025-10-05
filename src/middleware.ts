@@ -2,13 +2,33 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // Define public routes that don't require authentication
-const publicRoutes = ['/login', '/register', '/'];
+const publicRoutes = [
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/reset-password',
+  '/verify-email',
+  '/verify-phone',
+  '/complete-profile',
+  '/',
+];
+
+// Routes that should allow access if user is navigating from the app
+// (they'll be protected by client-side ProtectedRoute component)
+const protectedRoutes = [
+  '/admin',
+  '/creator',
+  '/dashboard',
+  '/courses',
+  '/my-courses',
+  '/profile',
+];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   // Allow public routes
-  if (publicRoutes.includes(pathname)) {
+  if (publicRoutes.some(route => pathname.startsWith(route)) || pathname === '/') {
     return NextResponse.next();
   }
 
@@ -22,9 +42,12 @@ export function middleware(request: NextRequest) {
   // Allow if either Bearer token or cookie token exists
   const token = bearerToken || cookieToken;
 
-  // Redirect to login if no token found
-  if (!token) {
-    return NextResponse.redirect(new URL('/login', request.url));
+  // For protected routes, if no token, redirect to login
+  if (!token && protectedRoutes.some(route => pathname.startsWith(route))) {
+    // Add a delay parameter to prevent immediate redirect loops
+    const url = new URL('/login', request.url);
+    url.searchParams.set('returnUrl', pathname);
+    return NextResponse.redirect(url);
   }
 
   return NextResponse.next();

@@ -34,6 +34,9 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       // Clear token and redirect to login on unauthorized
       localStorage.removeItem('token');
+      localStorage.removeItem('auth-user');
+      
+      // Redirect to single login page for all users
       window.location.href = '/login';
     }
     return Promise.reject(error);
@@ -101,6 +104,7 @@ export interface LoginRequest {
 }
 
 export interface AuthResponse {
+  requiresVerification: any;
   success: boolean;
   message: string;
   token: string;
@@ -367,11 +371,7 @@ export interface EnrollmentResponse {
   success: boolean;
   message: string;
   data: {
-    enrollment: {
-      id: string;
-      progress: number;
-      enrolledAt: string;
-    };
+    enrollment: EnrollmentDetail;
   };
 }
 
@@ -424,9 +424,7 @@ export interface GetProgressResponse {
 
 export interface GetCourseProgressResponse {
   success: boolean;
-  data: {
-    enrollment: EnrollmentDetail;
-  };
+  data: EnrollmentDetail;
 }
 
 export interface CompleteLessonResponse {
@@ -450,17 +448,33 @@ export interface CompleteLessonResponse {
 export interface EnrollmentStatusResponse {
   success: boolean;
   data: {
-    isEnrolled: boolean;
-    enrollment?: {
-      id: string;
-      progress: number;
-      enrolledAt: string;
-      completedAt?: string;
-    };
+    // backend uses `enrolled` flag in your sample
+    enrolled: boolean;
+    // full enrollment detail when enrolled
+    enrollment?: EnrollmentDetail;
   };
 }
 
 // Admin Types
+export interface CreatorApplication {
+  id: string;
+  userId: string;
+  bio: string;
+  portfolio?: string;
+  experience: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  createdAt: string;
+  updatedAt: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+  rejectionReason?: string;
+  user: {
+    id: string;
+    name: string | null;
+    email: string;
+  };
+}
+
 export interface PendingApplication {
   id: string;
   userId: string;
@@ -474,16 +488,58 @@ export interface PendingApplication {
 
 export interface GetApplicationsResponse {
   success: boolean;
-  data: PendingApplication[];
+  data: {
+    applications: CreatorApplication[];
+  };
 }
 
-export interface ApplicationActionRequest {
-  comments?: string;
+export interface GetApplicationDetailResponse {
+  success: boolean;
+  data: {
+    application: CreatorApplication;
+  };
+}
+
+export interface ApplicationApproveRequest {
+  // No fields required, but can send optional metadata
+}
+
+export interface ApplicationRejectRequest {
+  reason: string; // Must be at least 10 characters
 }
 
 export interface ApplicationActionResponse {
   success: boolean;
   message: string;
+  data?: {
+    application: CreatorApplication;
+  };
+}
+
+export interface CourseForReview {
+  id: string;
+  title: string;
+  description: string;
+  thumbnailUrl?: string;
+  status: 'DRAFT' | 'PENDING' | 'PUBLISHED' | 'REJECTED';
+  createdAt: string;
+  updatedAt: string;
+  submittedAt?: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+  rejectionFeedback?: string;
+  lessonCount: number;
+  creator: {
+    id: string;
+    name: string | null;
+    email: string;
+  };
+  lessons: Array<{
+    id: string;
+    title: string;
+    order: number;
+    videoUrl: string;
+  }>;
 }
 
 export interface PendingCourse {
@@ -496,9 +552,26 @@ export interface PendingCourse {
   createdAt?: string;
 }
 
-export interface GetPendingCoursesResponse {
+export interface GetCoursesForReviewResponse {
   success: boolean;
-  data: PendingCourse[];
+  data: {
+    courses: CourseForReview[];
+  };
+}
+
+export interface GetCourseDetailResponse {
+  success: boolean;
+  data: {
+    course: CourseForReview;
+  };
+}
+
+export interface CoursePublishRequest {
+  // No fields required, but can send optional metadata
+}
+
+export interface CourseRejectRequest {
+  feedback: string; // Must be at least 10 characters
 }
 
 export interface CourseActionRequest {
@@ -508,21 +581,136 @@ export interface CourseActionRequest {
 export interface CourseActionResponse {
   success: boolean;
   message: string;
+  data?: {
+    course: CourseForReview;
+  };
 }
 
+// Admin Metrics Types (matches backend exactly)
 export interface AdminMetrics {
-  totalUsers: number;
-  totalCreators: number;
-  totalCourses: number;
-  publishedCourses: number;
-  totalEnrollments: number;
-  pendingApplications: number;
-  pendingCourses: number;
+  users?: {
+    total: number;
+    byRole?: {
+      USER: number;
+      CREATOR: number;
+      ADMIN: number;
+    };
+    recentSignups: number;
+  };
+  courses?: {
+    total: number;
+    byStatus?: {
+      DRAFT: number;
+      PENDING: number;
+      PUBLISHED: number;
+      REJECTED: number;
+    };
+    recentlyCreated: number;
+  };
+  enrollments?: {
+    total: number;
+    active: number;
+    completed: number;
+    completionRate: string;
+    recentEnrollments: number;
+  };
+  certificates?: {
+    total: number;
+    issuanceRate: string;
+  };
+  applications?: {
+    total: number;
+    byStatus?: {
+      PENDING: number;
+      APPROVED: number;
+      REJECTED: number;
+    };
+  };
+  timestamp?: string;
 }
 
 export interface GetAdminMetricsResponse {
   success: boolean;
   data: AdminMetrics;
+}
+
+export interface AdminMetricsSummary {
+  pendingApplications: number;
+  pendingCourses: number;
+  totalUsers: number;
+  totalEnrollments: number;
+  recentActivity: number;
+}
+
+export interface GetAdminMetricsSummaryResponse {
+  success: boolean;
+  data: AdminMetricsSummary;
+}
+
+export interface GrowthMetrics {
+  users: {
+    current: number;
+    previous: number;
+    growth: number;
+    growthRate: string;
+  };
+  enrollments: {
+    current: number;
+    previous: number;
+    growth: number;
+    growthRate: string;
+  };
+  courses: {
+    current: number;
+    previous: number;
+    growth: number;
+    growthRate: string;
+  };
+  certificates: {
+    current: number;
+    previous: number;
+    growth: number;
+    growthRate: string;
+  };
+}
+
+export interface GetGrowthMetricsResponse {
+  success: boolean;
+  data: GrowthMetrics;
+}
+
+export interface TopCourse {
+  id: string;
+  title: string;
+  creator: {
+    name: string;
+    email: string;
+  };
+  enrollmentCount: number;
+  completionRate: string;
+  averageProgress: string;
+}
+
+export interface GetTopCoursesResponse {
+  success: boolean;
+  data: {
+    courses: TopCourse[];
+  };
+}
+
+export interface ActivityItem {
+  id: string;
+  type: 'enrollment' | 'completion' | 'course_published' | 'application_approved';
+  description: string;
+  timestamp: string;
+  metadata?: any;
+}
+
+export interface GetRecentActivityResponse {
+  success: boolean;
+  data: {
+    activities: ActivityItem[];
+  };
 }
 
 // Auth API functions
@@ -534,7 +722,7 @@ export const authAPI = {
   },
 
   verifyEmail: async (data: VerifyEmailRequest): Promise<VerificationResponse> => {
-    const response = await api.post<VerificationResponse>('/api/user-auth/verify-email-otp', data);
+  const response = await api.post<VerificationResponse>('/api/user-auth/verify-email', data);
     return response.data;
   },
 
@@ -556,6 +744,18 @@ export const authAPI = {
   // Login
   login: async (data: LoginRequest): Promise<AuthResponse> => {
     const response = await api.post<AuthResponse>('/api/user-auth/login', data);
+    return response.data;
+  },
+
+  // Check if user exists (email or phone) - used by frontend contact check
+  checkUser: async (data: { emailOrPhone: string }): Promise<any> => {
+    const response = await api.post('/api/user/auth/check-user', data);
+    return response.data;
+  },
+
+  // Send OTP (existing user flow)
+  sendOTP: async (data: { emailOrPhone: string }): Promise<any> => {
+    const response = await api.post('/api/user/auth/send-otp', data);
     return response.data;
   },
 
@@ -590,7 +790,7 @@ export const authAPI = {
 
   updateProfile: async (data: UpdateProfileRequest): Promise<{ success: boolean; user: User }> => {
     // Note: Backend uses /api/auth/me for profile updates
-    const response = await api.put('/api/auth/me', data);
+    const response = await api.patch('/api/auth/me', data);
     return response.data;
   },
 
@@ -613,12 +813,6 @@ export const authAPI = {
 
   verifyPhoneChange: async (data: VerifyChangeRequest): Promise<{ success: boolean; user: User }> => {
     const response = await api.post('/api/user-auth/verify-phone-change', data);
-    return response.data;
-  },
-
-  // Admin
-  adminLogin: async (data: LoginRequest): Promise<AuthResponse> => {
-    const response = await api.post<AuthResponse>('/api/admin-auth/login', data);
     return response.data;
   },
 };
@@ -673,20 +867,45 @@ export const courseAPI = {
         // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 800));
         
+        const mockEnrollment: EnrollmentDetail = {
+          completedLessons: 0,
+          totalLessons: 0,
+          id: Math.random().toString(36).substring(2, 9),
+          userId: 'dev_user',
+          courseId,
+          progress: 0,
+          enrolledAt: new Date().toISOString(),
+          completedAt: undefined,
+          lastAccessedAt: undefined,
+          course: {
+            totalLessons: 0,
+            id: courseId,
+            title: 'Dev Course',
+            description: '',
+            thumbnail: undefined,
+            level: 'BEGINNER',
+            lessonCount: 0,
+            creator: { id: 'dev_creator', name: null }
+          },
+          lessonProgress: []
+        };
+
         return {
           success: true,
           message: 'Successfully enrolled in course',
           data: {
-            enrollment: {
-              id: Math.random().toString(36).substring(2, 9),
-              progress: 0,
-              enrolledAt: new Date().toISOString()
-            }
+            enrollment: mockEnrollment,
           }
         };
       }
       throw error;
     }
+  },
+
+  // Check enrollment status
+  checkEnrollmentStatus: async (courseId: string): Promise<EnrollmentStatusResponse> => {
+    const response = await api.get<EnrollmentStatusResponse>(`/api/courses/${courseId}/enrollment`);
+    return response.data;
   },
 
   // Get all lessons for a course
@@ -804,12 +1023,15 @@ export const creatorAPI = {
   uploadThumbnail: async (credentials: any, file: File, onProgress?: (progress: number) => void): Promise<string> => {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('api_key', credentials.apiKey);
-    formData.append('timestamp', credentials.timestamp);
-    formData.append('signature', credentials.signature);
-    formData.append('public_id', credentials.publicId);
+    
+    // Add signed parameters in alphabetical order (backend signs: folder, public_id, timestamp)
     formData.append('folder', credentials.folder);
-    formData.append('eager', 'c_fill,w_1200,h_675/q_auto');
+    formData.append('public_id', credentials.publicId);
+    formData.append('timestamp', credentials.timestamp);
+    
+    // Add signature and api_key (not signed but required)
+    formData.append('signature', credentials.signature);
+    formData.append('api_key', credentials.apiKey);
 
     const response = await fetch(credentials.uploadUrl, {
       method: 'POST',
@@ -830,11 +1052,15 @@ export const creatorAPI = {
   uploadVideo: async (credentials: any, file: File, onProgress?: (progress: number) => void): Promise<{ url: string; duration: number }> => {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('api_key', credentials.apiKey);
-    formData.append('timestamp', credentials.timestamp);
-    formData.append('signature', credentials.signature);
-    formData.append('public_id', credentials.publicId);
+    
+    // Add signed parameters in alphabetical order (backend signs: folder, public_id, timestamp)
     formData.append('folder', credentials.folder);
+    formData.append('public_id', credentials.publicId);
+    formData.append('timestamp', credentials.timestamp);
+    
+    // Add signature and api_key (not signed but required)
+    formData.append('signature', credentials.signature);
+    formData.append('api_key', credentials.apiKey);
 
     const xhr = new XMLHttpRequest();
 
@@ -878,45 +1104,124 @@ export const creatorAPI = {
 
 // Admin API functions
 export const adminAPI = {
-  // Get pending creator applications
-  getApplications: async (status: 'PENDING' | 'APPROVED' | 'REJECTED' = 'PENDING'): Promise<GetApplicationsResponse> => {
-    const response = await api.get<GetApplicationsResponse>(`/api/admin/applications?status=${status}`);
+  // Get all applications (filterable by status)
+  getApplications: async (status?: 'PENDING' | 'APPROVED' | 'REJECTED'): Promise<GetApplicationsResponse> => {
+    const url = status 
+      ? `/api/admin/applications?status=${status}` 
+      : '/api/admin/applications';
+    const response = await api.get<GetApplicationsResponse>(url);
+    return response.data;
+  },
+
+  // Get pending applications (shortcut endpoint)
+  getApplicationsPending: async (): Promise<GetApplicationsResponse> => {
+    const response = await api.get<GetApplicationsResponse>('/api/admin/applications/pending');
+    return response.data;
+  },
+
+  // Get single application detail
+  getApplication: async (applicationId: string): Promise<GetApplicationDetailResponse> => {
+    const response = await api.get<GetApplicationDetailResponse>(`/api/admin/applications/${applicationId}`);
     return response.data;
   },
 
   // Approve creator application
-  approveApplication: async (applicationId: string, data: ApplicationActionRequest): Promise<ApplicationActionResponse> => {
-    const response = await api.post<ApplicationActionResponse>(`/api/admin/applications/${applicationId}/approve`, data);
+  approveApplication: async (applicationId: string, data?: ApplicationApproveRequest): Promise<ApplicationActionResponse> => {
+    const response = await api.post<ApplicationActionResponse>(
+      `/api/admin/applications/${applicationId}/approve`, 
+      data || {}
+    );
     return response.data;
   },
 
-  // Reject creator application
-  rejectApplication: async (applicationId: string, data: ApplicationActionRequest): Promise<ApplicationActionResponse> => {
-    const response = await api.post<ApplicationActionResponse>(`/api/admin/applications/${applicationId}/reject`, data);
+  // Reject creator application (reason required, min 10 chars)
+  rejectApplication: async (applicationId: string, data: ApplicationRejectRequest): Promise<ApplicationActionResponse> => {
+    const response = await api.post<ApplicationActionResponse>(
+      `/api/admin/applications/${applicationId}/reject`, 
+      data
+    );
     return response.data;
   },
 
-  // Get pending courses for review
-  getPendingCourses: async (status: 'PENDING' | 'PUBLISHED' | 'REJECTED' = 'PENDING'): Promise<GetPendingCoursesResponse> => {
-    const response = await api.get<GetPendingCoursesResponse>(`/api/admin/courses?status=${status}`);
+  // Get all courses (filterable by status)
+  getCourses: async (status?: 'PENDING' | 'PUBLISHED' | 'REJECTED'): Promise<GetCoursesForReviewResponse> => {
+    const url = status 
+      ? `/api/admin/courses?status=${status}` 
+      : '/api/admin/courses';
+    const response = await api.get<GetCoursesForReviewResponse>(url);
+    return response.data;
+  },
+
+  // Get pending courses (shortcut endpoint)
+  getCoursesPending: async (): Promise<GetCoursesForReviewResponse> => {
+    const response = await api.get('/api/admin/courses/pending');
+
+    // Normalize server shapes:
+    // - { success, data: { courses: [...] } }
+    // - { success, count, courses: [...] }
+    if (response.data && response.data.data && response.data.data.courses) {
+      return { success: true, data: { courses: response.data.data.courses } } as GetCoursesForReviewResponse;
+    }
+
+    if (response.data && response.data.courses) {
+      return { success: true, data: { courses: response.data.courses } } as GetCoursesForReviewResponse;
+    }
+
+    // Fallback: return empty list
+    return { success: false, data: { courses: [] } } as GetCoursesForReviewResponse;
+  },
+
+  // Get single course detail for review
+  getCourseDetail: async (courseId: string): Promise<GetCourseDetailResponse> => {
+    const response = await api.get<GetCourseDetailResponse>(`/api/admin/courses/${courseId}`);
     return response.data;
   },
 
   // Publish a course
-  publishCourse: async (courseId: string, data: CourseActionRequest): Promise<CourseActionResponse> => {
-    const response = await api.post<CourseActionResponse>(`/api/admin/courses/${courseId}/publish`, data);
+  publishCourse: async (courseId: string, data?: CoursePublishRequest): Promise<CourseActionResponse> => {
+    const response = await api.post<CourseActionResponse>(
+      `/api/admin/courses/${courseId}/publish`, 
+      data || {}
+    );
     return response.data;
   },
 
-  // Reject a course
-  rejectCourse: async (courseId: string, data: CourseActionRequest): Promise<CourseActionResponse> => {
-    const response = await api.post<CourseActionResponse>(`/api/admin/courses/${courseId}/reject`, data);
+  // Reject a course (feedback required, min 10 chars)
+  rejectCourse: async (courseId: string, data: CourseRejectRequest): Promise<CourseActionResponse> => {
+    const response = await api.post<CourseActionResponse>(
+      `/api/admin/courses/${courseId}/reject`, 
+      data
+    );
     return response.data;
   },
 
   // Get admin dashboard metrics
   getMetrics: async (): Promise<GetAdminMetricsResponse> => {
     const response = await api.get<GetAdminMetricsResponse>('/api/admin/metrics');
+    return response.data;
+  },
+
+  // Get lightweight summary metrics (for frequent polling)
+  getMetricsSummary: async (): Promise<GetAdminMetricsSummaryResponse> => {
+    const response = await api.get<GetAdminMetricsSummaryResponse>('/api/admin/metrics/summary');
+    return response.data;
+  },
+
+  // Get growth analytics (last 30 days vs previous 30 days)
+  getGrowthMetrics: async (): Promise<GetGrowthMetricsResponse> => {
+    const response = await api.get<GetGrowthMetricsResponse>('/api/admin/metrics/growth');
+    return response.data;
+  },
+
+  // Get top courses by enrollment
+  getTopCourses: async (limit: number = 10): Promise<GetTopCoursesResponse> => {
+    const response = await api.get<GetTopCoursesResponse>(`/api/admin/metrics/top-courses?limit=${limit}`);
+    return response.data;
+  },
+
+  // Get recent activity feed
+  getRecentActivity: async (limit: number = 20): Promise<GetRecentActivityResponse> => {
+    const response = await api.get<GetRecentActivityResponse>(`/api/admin/metrics/activity?limit=${limit}`);
     return response.data;
   },
 };
@@ -938,9 +1243,37 @@ export interface CertificateMetadata {
   certificateUrl: string;
 }
 
+export interface Certificate {
+  id: string;
+  serialNumber: string;
+  serialHash: string;
+  issuedAt: string;
+  imageUrl: string;
+  enrollment: {
+    id: string;
+    completedAt: string;
+    course: {
+      id: string;
+      title: string;
+      thumbnail?: string;
+      category?: string;
+    };
+  };
+}
+
 export interface GetCertificateResponse {
   success: boolean;
-  data: CertificateMetadata;
+  data: {
+    certificate: Certificate;
+  };
+}
+
+export interface GetCertificatesResponse {
+  success: boolean;
+  data: {
+    certificates: Certificate[];
+    total?: number;
+  };
 }
 
 export interface CertificateVerification {
@@ -965,17 +1298,96 @@ export const progressAPI = {
 
   // Get certificate metadata
   getCertificate: async (enrollmentId: string): Promise<GetCertificateResponse> => {
-    const response = await api.get<GetCertificateResponse>(`/api/enrollments/${enrollmentId}/certificate`);
-    return response.data;
+    const response = await api.get(`/api/enrollments/${enrollmentId}/certificate`);
+    // Normalize: backend may return { success, data: { certificate } } or { success, certificate }
+    if (response.data && response.data.data && response.data.data.certificate) {
+      return { success: true, data: { certificate: response.data.data.certificate } } as GetCertificateResponse;
+    }
+    if (response.data && response.data.certificate) {
+      return { success: true, data: { certificate: response.data.certificate } } as GetCertificateResponse;
+    }
+    // Fallback - preserve existing structure
+    return response.data as GetCertificateResponse;
+  },
+
+  // Poll until certificate metadata is available or timeout
+  waitForCertificate: async (
+    enrollmentId: string,
+    options?: { intervalMs?: number; timeoutMs?: number }
+  ): Promise<GetCertificateResponse> => {
+    const interval = options?.intervalMs ?? 3000;
+    const timeout = options?.timeoutMs ?? 60000; // default 60s
+    const start = Date.now();
+
+    while (Date.now() - start < timeout) {
+      try {
+        const response = await api.get(`/api/enrollments/${enrollmentId}/certificate`);
+
+        // Normalize similar to getCertificate
+        if (response.data && response.data.data && response.data.data.certificate) {
+          return { success: true, data: { certificate: response.data.data.certificate } } as GetCertificateResponse;
+        }
+        if (response.data && response.data.certificate) {
+          return { success: true, data: { certificate: response.data.certificate } } as GetCertificateResponse;
+        }
+
+        // If server returned 200 but no certificate payload yet, wait and retry
+      } catch (err: any) {
+        // If 404 Not Found, certificate isn't created yet - continue polling
+        if (err.response?.status === 404) {
+          // continue polling
+        } else {
+          // For other errors, surface immediately
+          throw err;
+        }
+      }
+
+      // wait before next attempt
+      await new Promise((res) => setTimeout(res, interval));
+    }
+
+    throw new Error('Certificate not available yet (timed out)');
+  },
+
+  // Get all user certificates
+  getUserCertificates: async (): Promise<GetCertificatesResponse> => {
+    const response = await api.get('/api/certificates');
+    // Normalize to { success, data: { certificates, total } }
+    if (response.data && response.data.data && response.data.data.certificates) {
+      return { success: true, data: { certificates: response.data.data.certificates, total: response.data.data.total } } as GetCertificatesResponse;
+    }
+    if (response.data && response.data.certificates) {
+      // older shape
+      return { success: true, data: { certificates: response.data.certificates, total: response.data.total } } as GetCertificatesResponse;
+    }
+    return response.data as GetCertificatesResponse;
   },
 
   // Download certificate PDF (returns blob URL)
-  downloadCertificate: async (enrollmentId: string): Promise<string> => {
+  downloadCertificate: async (enrollmentId: string): Promise<{ type: 'pdf'; url: string } | { type: 'json'; data: any }> => {
+    // Try to fetch as blob first; if backend returns JSON (current dev behavior), return parsed JSON
     const response = await api.get(`/api/enrollments/${enrollmentId}/certificate/download`, {
       responseType: 'blob',
     });
-    const blob = new Blob([response.data], { type: 'application/pdf' });
-    return window.URL.createObjectURL(blob);
+
+    const contentType = response.headers['content-type'] || response.headers['Content-Type'] || '';
+
+    // If backend returns PDF
+    if (contentType.includes('application/pdf')) {
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      return { type: 'pdf', url };
+    }
+
+    // Otherwise try to parse blob as text JSON
+    try {
+      const text = await response.data.text();
+      const json = JSON.parse(text);
+      return { type: 'json', data: json };
+    } catch (err) {
+      // Unknown blob type - return as JSON fallback
+      return { type: 'json', data: { success: false, message: 'Unsupported download response' } };
+    }
   },
 
   // Verify certificate (public, no auth required)
