@@ -40,7 +40,9 @@ export function LoginForm() {
     const onSubmit = async (data: LoginFormData) => {
     try {
       setError('');
+      console.log('LoginForm: Starting login with data:', { emailOrPhone: data.emailOrPhone });
       const user = await login(data);
+      console.log('LoginForm: Login successful, user role:', user?.role);
       addToast('Login successful! Welcome back.', 'success');
       
       // Brief delay to ensure token is properly synced
@@ -48,14 +50,18 @@ export function LoginForm() {
       
       // Redirect based on user role
       if (user?.role === 'ADMIN') {
+        console.log('LoginForm: Redirecting to /admin/dashboard');
         router.replace('/admin/dashboard');
       } else if (user?.role === 'CREATOR') {
+        console.log('LoginForm: Redirecting to /creator/dashboard');
         router.replace('/creator/dashboard');  
       } else {
+        console.log('LoginForm: Redirecting to /courses');
         router.replace('/courses');
       }
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Login failed. Please try again.';
+      console.error('LoginForm: Login failed:', errorMessage, err);
       setError(errorMessage);
       addToast(errorMessage, 'error');
     }
