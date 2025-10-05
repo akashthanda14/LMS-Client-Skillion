@@ -78,6 +78,27 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
+/* Brand tokens (primary: #6D28D9) */
+:root {
+  --brand-50: #f5f3ff;
+  --brand-100: #ede9fe;
+  --brand-500: #6d28d9; /* primary */
+  --brand-600: #5b21b6;
+  --brand-soft-a: rgba(109,40,217,0.22);
+  --surface: #ffffff;
+  --surface-border: rgba(15,23,42,0.06);
+  --muted: #6b7280;
+}
+
+/* Blurred orb helper for depth */
+.blurred-orb {
+  position: absolute;
+  filter: blur(48px);
+  opacity: .22;
+  pointer-events: none;
+  z-index: -1;
+}
+
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);

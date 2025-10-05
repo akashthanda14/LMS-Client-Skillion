@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import BrandOrbs from '@/components/presentational/BrandOrbs';
 import { ToastProvider } from "@/components/ui/toast";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CourseProvider } from "@/contexts/CourseContext";
@@ -27,13 +28,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthProvider>
           <CourseProvider>
             <ToastProvider>
-              {children}
+              <div className="relative min-h-screen">
+                <BrandOrbs />
+                <div className="container max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+                  {children}
+                </div>
+              </div>
             </ToastProvider>
           </CourseProvider>
         </AuthProvider>
