@@ -81,7 +81,6 @@ export function LessonUploader({ courseId, lessonOrder, onUploadComplete }: Less
       formData.append('signature', credentials.signature);
       formData.append('public_id', credentials.publicId);
       formData.append('folder', credentials.folder);
-      formData.append('resource_type', credentials.resourceType || 'video');
 
       const xhr = new XMLHttpRequest();
 

@@ -835,7 +835,6 @@ export const creatorAPI = {
     formData.append('signature', credentials.signature);
     formData.append('public_id', credentials.publicId);
     formData.append('folder', credentials.folder);
-    formData.append('resource_type', 'video');
 
     const xhr = new XMLHttpRequest();
 
