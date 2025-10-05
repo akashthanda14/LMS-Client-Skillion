@@ -76,11 +76,13 @@ export function LessonUploader({ courseId, lessonOrder, onUploadComplete }: Less
     return new Promise((resolve, reject) => {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('api_key', credentials.apiKey);
+      
+      // Add ONLY the parameters that were signed (in exact order they were signed)
+      formData.append('folder', credentials.folder);
+      formData.append('public_id', credentials.publicId);
       formData.append('timestamp', credentials.timestamp.toString());
       formData.append('signature', credentials.signature);
-      formData.append('public_id', credentials.publicId);
-      formData.append('folder', credentials.folder);
+      formData.append('api_key', credentials.apiKey);
 
       const xhr = new XMLHttpRequest();
 

@@ -16,24 +16,43 @@ export function CertificateDownload({ enrollmentId, courseTitle }: CertificateDo
   const [error, setError] = useState<string>('');
   const [showPreview, setShowPreview] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string>('');
+  const [jsonPreview, setJsonPreview] = useState<any>(null);
 
   const handleDownload = async () => {
     try {
       setIsDownloading(true);
       setError('');
 
-      const url = await progressAPI.downloadCertificate(enrollmentId);
-      
-      // Create download link
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${courseTitle.replace(/[^a-z0-9]/gi, '_')}_Certificate.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // Wait for certificate metadata to be available (worker may be asynchronous)
+      try {
+        await progressAPI.waitForCertificate(enrollmentId, { intervalMs: 2500, timeoutMs: 60000 });
+      } catch (pollErr: any) {
+        // If still not available, show friendly message and let user preview later
+        setError('Certificate is still being generated. Please try again in a few moments.');
+        return;
+      }
 
-      // Clean up blob URL
-      setTimeout(() => window.URL.revokeObjectURL(url), 100);
+      const result = await progressAPI.downloadCertificate(enrollmentId);
+
+      if (result.type === 'pdf') {
+        const url = result.url;
+        // Create download link
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${courseTitle.replace(/[^a-z0-9]/gi, '_')}_Certificate.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Clean up blob URL
+        setTimeout(() => window.URL.revokeObjectURL(url), 100);
+      } else {
+        // Backend returned JSON (dev placeholder). Show message and preview JSON
+        setPdfUrl('');
+        setShowPreview(true);
+        setError('PDF generation not implemented on server; previewing certificate data below.');
+        setJsonPreview(result.data);
+      }
     } catch (err: any) {
       console.error('Download failed:', err);
       setError(err.response?.data?.message || 'Failed to download certificate');
@@ -47,9 +66,22 @@ export function CertificateDownload({ enrollmentId, courseTitle }: CertificateDo
       setIsDownloading(true);
       setError('');
 
-      const url = await progressAPI.downloadCertificate(enrollmentId);
-      setPdfUrl(url);
-      setShowPreview(true);
+      // Ensure certificate exists before attempting preview (avoid 404s while worker runs)
+      try {
+        await progressAPI.waitForCertificate(enrollmentId, { intervalMs: 2500, timeoutMs: 60000 });
+      } catch (pollErr: any) {
+        setError('Certificate is still being generated. Please try preview after a short while.');
+        return;
+      }
+
+      const result = await progressAPI.downloadCertificate(enrollmentId);
+      if (result.type === 'pdf') {
+        setPdfUrl(result.url);
+        setShowPreview(true);
+      } else {
+        setJsonPreview(result.data);
+        setShowPreview(true);
+      }
     } catch (err: any) {
       console.error('Preview failed:', err);
       setError(err.response?.data?.message || 'Failed to load certificate');
@@ -110,7 +142,7 @@ export function CertificateDownload({ enrollmentId, courseTitle }: CertificateDo
 
       {/* Preview Modal */}
       <AnimatePresence>
-        {showPreview && pdfUrl && (
+        {showPreview && (pdfUrl || jsonPreview) && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             {/* Backdrop */}
             <motion.div
@@ -148,12 +180,18 @@ export function CertificateDownload({ enrollmentId, courseTitle }: CertificateDo
                 </div>
               </div>
 
-              {/* PDF Viewer */}
-              <iframe
-                src={pdfUrl}
-                className="w-full h-full"
-                title="Certificate Preview"
-              />
+              {/* Viewer */}
+              {pdfUrl ? (
+                <iframe
+                  src={pdfUrl}
+                  className="w-full h-full"
+                  title="Certificate Preview"
+                />
+              ) : jsonPreview ? (
+                <div className="p-6 overflow-auto h-full">
+                  <pre className="whitespace-pre-wrap text-sm">{JSON.stringify(jsonPreview, null, 2)}</pre>
+                </div>
+              ) : null}
             </motion.div>
           </div>
         )}

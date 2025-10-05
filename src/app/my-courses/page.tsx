@@ -144,7 +144,7 @@ export default function MyCoursesPage() {
 
                       {/* Lesson Progress */}
                       <div className="text-sm text-gray-600 mb-4">
-                        {enrollment.lessonProgress.filter(lp => lp.completed).length} of {enrollment.course.lessonCount} lessons completed
+                        {enrollment.completedLessons || 0} of {enrollment.course.lessonCount} lessons completed
                       </div>
 
                       {/* Certificate Badge */}
