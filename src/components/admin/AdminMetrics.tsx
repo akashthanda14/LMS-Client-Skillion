@@ -13,47 +13,53 @@ export function AdminMetrics({ metrics }: AdminMetricsProps) {
   const metricsData = [
     {
       label: 'Total Users',
-      value: metrics.totalUsers,
+      value: metrics.users?.total || 0,
       icon: Users,
       color: 'text-blue-600',
       bgColor: 'bg-blue-100',
+      subtitle: `+${metrics.users?.recentSignups || 0} recent`,
     },
     {
-      label: 'Total Creators',
-      value: metrics.totalCreators,
+      label: 'Creators',
+      value: metrics.users?.byRole?.CREATOR || 0,
       icon: GraduationCap,
       color: 'text-purple-600',
       bgColor: 'bg-purple-100',
+      subtitle: `${metrics.users?.byRole?.ADMIN || 0} admins`,
     },
     {
-      label: 'Total Courses',
-      value: metrics.totalCourses,
+      label: 'Published Courses',
+      value: metrics.courses?.byStatus?.PUBLISHED || 0,
       icon: BookOpen,
       color: 'text-green-600',
       bgColor: 'bg-green-100',
+      subtitle: `${metrics.courses?.total || 0} total`,
     },
     {
       label: 'Total Enrollments',
-      value: metrics.totalEnrollments,
+      value: metrics.enrollments?.total || 0,
       icon: TrendingUp,
       color: 'text-orange-600',
       bgColor: 'bg-orange-100',
+      subtitle: `${metrics.enrollments?.completionRate || '0'}% completion`,
     },
     {
       label: 'Pending Applications',
-      value: metrics.pendingApplications,
+      value: metrics.applications?.byStatus?.PENDING || 0,
       icon: Clock,
       color: 'text-yellow-600',
       bgColor: 'bg-yellow-100',
-      highlight: metrics.pendingApplications > 0,
+      highlight: (metrics.applications?.byStatus?.PENDING || 0) > 0,
+      subtitle: `${metrics.applications?.total || 0} total`,
     },
     {
       label: 'Pending Courses',
-      value: metrics.pendingCourses,
+      value: metrics.courses?.byStatus?.PENDING || 0,
       icon: AlertCircle,
       color: 'text-red-600',
       bgColor: 'bg-red-100',
-      highlight: metrics.pendingCourses > 0,
+      highlight: (metrics.courses?.byStatus?.PENDING || 0) > 0,
+      subtitle: `${metrics.courses?.byStatus?.DRAFT || 0} drafts`,
     },
   ];
 
@@ -84,6 +90,11 @@ export function AdminMetrics({ metrics }: AdminMetricsProps) {
                   <p className="text-3xl font-bold text-gray-900">
                     {metric.value.toLocaleString()}
                   </p>
+                  {metric.subtitle && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {metric.subtitle}
+                    </p>
+                  )}
                 </div>
               </div>
             </Card>

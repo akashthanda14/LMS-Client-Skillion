@@ -28,11 +28,19 @@ export function ApprovalModal({
 }: ApprovalModalProps) {
   const [comments, setComments] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validationError, setValidationError] = useState('');
 
   if (!isOpen) return null;
 
   const handleSubmit = async () => {
+    // Validate rejection reason length (must be ≥10 chars for rejections)
+    if (type === 'reject' && comments.trim().length < 10) {
+      setValidationError('Rejection reason must be at least 10 characters');
+      return;
+    }
+
     setIsSubmitting(true);
+    setValidationError('');
     try {
       await onConfirm(comments);
       setComments('');
@@ -47,6 +55,7 @@ export function ApprovalModal({
   const handleClose = () => {
     if (!isSubmitting) {
       setComments('');
+      setValidationError('');
       onClose();
     }
   };
@@ -100,22 +109,34 @@ export function ApprovalModal({
           {/* Comments Input */}
           <div className="space-y-2">
             <Label htmlFor="comments">
-              {isApprove ? 'Approval Message (Optional)' : 'Rejection Reason (Optional)'}
+              {isApprove ? 'Approval Message (Optional)' : `Rejection ${itemType === 'application' ? 'Reason' : 'Feedback'} (Required, min 10 chars)`}
             </Label>
             <Textarea
               id="comments"
               value={comments}
-              onChange={(e) => setComments(e.target.value)}
+              onChange={(e) => {
+                setComments(e.target.value);
+                setValidationError('');
+              }}
               placeholder={
                 isApprove
                   ? 'Welcome message or additional notes...'
-                  : 'Explain why this is being rejected...'
+                  : itemType === 'application'
+                  ? 'Explain why this application is being rejected...'
+                  : 'Provide feedback on what needs to be improved...'
               }
               rows={4}
               maxLength={500}
               disabled={isSubmitting}
+              className={validationError ? 'border-red-500' : ''}
             />
-            <p className="text-xs text-gray-500">{comments.length}/500 characters</p>
+            {validationError && (
+              <p className="text-xs text-red-600">{validationError}</p>
+            )}
+            <p className="text-xs text-gray-500">
+              {comments.length}/500 characters
+              {type === 'reject' && comments.length < 10 && ` (${10 - comments.length} more needed)`}
+            </p>
           </div>
         </div>
 

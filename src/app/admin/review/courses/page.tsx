@@ -9,13 +9,24 @@ import { ApprovalModal } from '@/components/admin/ApprovalModal';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { usePendingCourses } from '@/hooks/usePendingCourses';
-import { PendingCourse } from '@/lib/api';
+import { CourseForReview, PendingCourse } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
 export default function ReviewCoursesPage() {
   const router = useRouter();
   const { courses, isLoading, error, publishCourse, rejectCourse } = usePendingCourses();
-  const [selectedCourse, setSelectedCourse] = useState<PendingCourse | null>(null);
+  const [selectedCourse, setSelectedCourse] = useState<CourseForReview | null>(null);
+  
+  // Transform CourseForReview to PendingCourse format for the card component
+  const transformedCourses: PendingCourse[] = courses.map(course => ({
+    id: course.id,
+    title: course.title,
+    description: course.description,
+    creatorName: course.creator.name || course.creator.email,
+    lessonCount: course.lessonCount,
+    thumbnailUrl: course.thumbnailUrl,
+    createdAt: course.createdAt,
+  }));
   const [modalType, setModalType] = useState<'approve' | 'reject'>('approve');
   const [showModal, setShowModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string>('');
@@ -163,7 +174,7 @@ export default function ReviewCoursesPage() {
         {/* Courses Grid */}
         {!error && courses.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {courses.map((course) => (
+            {transformedCourses.map((course) => (
               <CourseReviewCard
                 key={course.id}
                 course={course}

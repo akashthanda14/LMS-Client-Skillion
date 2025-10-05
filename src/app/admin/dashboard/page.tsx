@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Loader2, AlertCircle, UserCheck, BookCheck, ArrowRight } from 'lucide-react';
+import { Loader2, AlertCircle, UserCheck, BookCheck, ArrowRight, BarChart3 } from 'lucide-react';
 import { AuthenticatedLayout } from '@/components/auth/AuthenticatedLayout';
 import { AdminMetrics } from '@/components/admin/AdminMetrics';
 import { Button } from '@/components/ui/button';
@@ -72,21 +72,30 @@ export default function AdminDashboardPage() {
   const quickActions = [
     {
       title: 'Review Creator Applications',
-      description: `${metrics.pendingApplications} pending applications`,
+      description: `${metrics.applications?.byStatus?.PENDING || 0} pending applications`,
       icon: UserCheck,
       color: 'text-blue-600',
       bgColor: 'bg-blue-100',
       href: '/admin/review/creators',
-      count: metrics.pendingApplications,
+      count: metrics.applications?.byStatus?.PENDING || 0,
     },
     {
       title: 'Review Pending Courses',
-      description: `${metrics.pendingCourses} courses awaiting approval`,
+      description: `${metrics.courses?.byStatus?.PENDING || 0} courses awaiting approval`,
       icon: BookCheck,
       color: 'text-purple-600',
       bgColor: 'bg-purple-100',
       href: '/admin/review/courses',
-      count: metrics.pendingCourses,
+      count: metrics.courses?.byStatus?.PENDING || 0,
+    },
+    {
+      title: 'View Analytics',
+      description: 'Platform growth and performance insights',
+      icon: BarChart3,
+      color: 'text-green-600',
+      bgColor: 'bg-green-100',
+      href: '/admin/analytics',
+      count: 0,
     },
   ];
 

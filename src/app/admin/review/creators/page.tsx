@@ -9,13 +9,25 @@ import { ApprovalModal } from '@/components/admin/ApprovalModal';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { usePendingApplications } from '@/hooks/usePendingApplications';
-import { PendingApplication } from '@/lib/api';
+import { CreatorApplication, PendingApplication } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
 export default function ReviewCreatorsPage() {
   const router = useRouter();
   const { applications, isLoading, error, approveApplication, rejectApplication } = usePendingApplications();
-  const [selectedApp, setSelectedApp] = useState<PendingApplication | null>(null);
+  const [selectedApp, setSelectedApp] = useState<CreatorApplication | null>(null);
+
+  // Transform CreatorApplication to PendingApplication format for the card component
+  const transformedApplications: PendingApplication[] = applications.map(app => ({
+    id: app.id,
+    userId: app.userId,
+    name: app.user.name || 'Unknown',
+    email: app.user.email,
+    bio: app.bio,
+    portfolioUrl: app.portfolio || '',
+    experienceYears: 0, // Not available in CreatorApplication type
+    createdAt: app.createdAt,
+  }));
   const [modalType, setModalType] = useState<'approve' | 'reject'>('approve');
   const [showModal, setShowModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string>('');
@@ -46,10 +58,10 @@ export default function ReviewCreatorsPage() {
       setActionLoading(true);
       if (modalType === 'approve') {
         await approveApplication(selectedApp.id);
-        setSuccessMessage(`✓ Approved ${selectedApp.name}'s application`);
+        setSuccessMessage(`✓ Approved ${selectedApp.user.name || selectedApp.user.email}'s application`);
       } else {
         await rejectApplication(selectedApp.id, comments);
-        setSuccessMessage(`✓ Rejected ${selectedApp.name}'s application`);
+        setSuccessMessage(`✓ Rejected ${selectedApp.user.name || selectedApp.user.email}'s application`);
       }
 
       // Clear success message after 5 seconds
@@ -163,7 +175,7 @@ export default function ReviewCreatorsPage() {
         {/* Applications Grid */}
         {!error && applications.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {applications.map((application) => (
+            {transformedApplications.map((application) => (
               <CreatorApplicationCard
                 key={application.id}
                 application={application}
@@ -187,8 +199,8 @@ export default function ReviewCreatorsPage() {
               }
               description={
                 modalType === 'approve'
-                  ? `You are about to approve ${selectedApp.name}'s application. They will be granted CREATOR role and can start creating courses.`
-                  : `You are about to reject ${selectedApp.name}'s application. Please provide a reason to help them improve.`
+                  ? `You are about to approve ${selectedApp.user.name || selectedApp.user.email}'s application. They will be granted CREATOR role and can start creating courses.`
+                  : `You are about to reject ${selectedApp.user.name || selectedApp.user.email}'s application. Please provide a reason to help them improve.`
               }
               type={modalType}
               onConfirm={handleConfirm}
