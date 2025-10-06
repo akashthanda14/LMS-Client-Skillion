@@ -45,15 +45,20 @@ export default function RegisterForm() {
     try {
       const response = await registerUser(data);
 
-      // For Next.js, we'll use query params
+      // Registration flow changed: backend now auto-verifies free-plan users.
+      // If profile completion is required, send the user to the profile setup page.
       const params = new URLSearchParams({
-        verificationType: response.verificationType,
-        contactInfo: data.email,
         userId: response.userId,
         requiresProfileCompletion: response.requiresProfileCompletion.toString(),
       });
-      
-      router.push(`/verify-otp?${params.toString()}`);
+
+      if (response.requiresProfileCompletion) {
+        // Brief success state could be shown here if desired; redirect to profile completion
+        router.push(`/complete-profile?${params.toString()}`);
+      } else {
+        // No profile completion required — treat register as complete and send user to login
+        router.push('/login');
+      }
     } catch (err: any) {
       setIsLoading(false);
       

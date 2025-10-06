@@ -94,12 +94,12 @@ export default function CompleteProfile() {
 
       const response = await completeProfile(profileData);
 
-      // Store token and user data
-      setToken(response.token);
-      setUser(response.user);
+  // Store token and user data
+  setToken(response.token);
+  setUser(response.user);
 
-      // Redirect to dashboard
-      router.push('/dashboard');
+  // After profile completion, redirect user to login to sign in
+  router.push('/login');
     } catch (err: any) {
       setIsLoading(false);
 

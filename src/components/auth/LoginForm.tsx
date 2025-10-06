@@ -108,10 +108,10 @@ export function LoginForm() {
                     <div className="bg-gray-50 rounded-lg p-2 border border-gray-100 hover:brightness-105 transition-colors">
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1"><span className="text-xs font-semibold text-red-600">🛡️ ADMIN</span></div>
-                          <div className="text-xs text-gray-700 space-y-0.5"><div>📧 admin@microcourses.com</div><div>🔑 password123</div></div>
+                          <div className="flex items-center gap-2 mb-1"><span className="text-xs font-semibold text-green-700">�‍🎓 LEARNER</span></div>
+                          <div className="text-xs text-gray-700 space-y-0.5"><div>📧 akashthanda14@gmail.com</div><div>🔑 Ak@sh274648</div></div>
                         </div>
-                        <Button type="button" size="sm" variant="outline" onClick={() => fillTestAccount('admin@microcourses.com','password123')} className="text-xs h-7 px-2">Fill</Button>
+                        <Button type="button" size="sm" variant="outline" onClick={() => fillTestAccount('akashthanda14@gmail.com','Ak@sh274648')} className="text-xs h-7 px-2">Fill</Button>
                       </div>
                     </div>
 
@@ -128,10 +128,10 @@ export function LoginForm() {
                     <div className="bg-gray-50 rounded-lg p-2 border border-gray-100 hover:brightness-105 transition-colors">
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1"><span className="text-xs font-semibold text-green-700">👨‍🎓 LEARNER</span></div>
-                          <div className="text-xs text-gray-700 space-y-0.5"><div>📧 akashthanda14@gmail.com</div><div>🔑 Ak@sh274648</div></div>
+                          <div className="flex items-center gap-2 mb-1"><span className="text-xs font-semibold text-red-600">�️ ADMIN</span></div>
+                          <div className="text-xs text-gray-700 space-y-0.5"><div>📧 admin@microcourses.com</div><div>🔑 password123</div></div>
                         </div>
-                        <Button type="button" size="sm" variant="outline" onClick={() => fillTestAccount('akashthanda14@gmail.com','Ak@sh274648')} className="text-xs h-7 px-2">Fill</Button>
+                        <Button type="button" size="sm" variant="outline" onClick={() => fillTestAccount('admin@microcourses.com','password123')} className="text-xs h-7 px-2">Fill</Button>
                       </div>
                     </div>
                   </div>
