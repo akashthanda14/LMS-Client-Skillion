@@ -35,17 +35,11 @@ export function TranscriptViewer({
   const [isExpanded, setIsExpanded] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Only poll if transcript not already available
-  const shouldPoll = !initialTranscript;
-  
-  const { status, isPolling, error } = useTranscriptPolling({
-    lessonId,
-    enabled: shouldPoll,
-    pollInterval: 5000,
-  });
+  // Use the polling hook (lessonId, initialTranscript)
+  const { status, transcript: polledTranscript, progress, isPolling, error } = useTranscriptPolling(lessonId, initialTranscript ?? undefined);
 
-  const transcript = initialTranscript || status?.transcript;
-  const transcriptStatus = status?.status;
+  const transcript = initialTranscript || polledTranscript;
+  const transcriptStatus = status; // 'queued' | 'processing' | 'completed' | 'failed' | 'unknown'
 
   const handleCopy = async () => {
     if (!transcript) return;
@@ -97,8 +91,8 @@ export function TranscriptViewer({
           <Alert>
             <Loader2 className="h-4 w-4 animate-spin" />
             <AlertDescription className="ml-2">
-              {transcriptStatus === 'waiting' && 'Transcription queued...'}
-              {transcriptStatus === 'active' && `Generating transcript... ${status?.progress || 0}%`}
+              {transcriptStatus === 'queued' && 'Transcription queued...'}
+              {transcriptStatus === 'processing' && `Generating transcript... ${progress || 0}%`}
               {!transcriptStatus && 'Checking transcript status...'}
             </AlertDescription>
           </Alert>
@@ -123,10 +117,10 @@ export function TranscriptViewer({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Alert className="border-red-200 bg-red-50">
+      <Alert className="border-red-200 bg-red-50">
             <XCircle className="h-4 w-4 text-red-600" />
             <AlertDescription className="ml-2 text-red-800">
-              {error || status?.error || 'Failed to generate transcript'}
+        {error || 'Failed to generate transcript'}
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -135,7 +129,7 @@ export function TranscriptViewer({
   }
 
   // Show message if no transcript and not processing
-  if (!transcript && transcriptStatus === 'not_queued') {
+  if (!transcript && (transcriptStatus === 'unknown')) {
     return (
       <Card>
         <CardHeader>

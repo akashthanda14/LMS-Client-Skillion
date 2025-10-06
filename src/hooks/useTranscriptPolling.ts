@@ -1,91 +1,124 @@
-'use client';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { getTranscriptStatus } from '@/services/transcriptService';
 
-import { useState, useEffect, useRef } from 'react';
-import { transcriptAPI, TranscriptStatus } from '@/lib/api';
+type Status = 'queued' | 'processing' | 'completed' | 'failed' | 'unknown';
 
-interface UseTranscriptPollingOptions {
-  lessonId: string;
-  enabled?: boolean; // Start polling immediately
-  pollInterval?: number; // Milliseconds between polls
-  maxAttempts?: number; // Max polling attempts before giving up
-}
+export function useTranscriptPolling(lessonId: string, initialTranscript?: string, opts?: { maxAttempts?: number }) {
+  const maxAttempts = opts?.maxAttempts ?? 60;
+  const [status, setStatus] = useState<Status>(initialTranscript ? 'completed' : 'unknown');
+  const [transcript, setTranscript] = useState<string | undefined>(initialTranscript);
+  const [progress, setProgress] = useState<number | undefined>(undefined);
+  const [isPolling, setIsPolling] = useState<boolean>(false);
+  const [attempts, setAttempts] = useState<number>(initialTranscript ? 0 : 0);
+  const [error, setError] = useState<any>(null);
 
-export const useTranscriptPolling = ({
-  lessonId,
-  enabled = true,
-  pollInterval = 5000, // Poll every 5 seconds
-  maxAttempts = 60, // Stop after 5 minutes (60 * 5s)
-}: UseTranscriptPollingOptions) => {
-  const [status, setStatus] = useState<TranscriptStatus | null>(null);
-  const [isPolling, setIsPolling] = useState(enabled);
-  const [error, setError] = useState<string | null>(null);
-  const attemptsRef = useRef(0);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  const stopPolling = () => {
-    setIsPolling(false);
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-  };
-
-  const checkStatus = async () => {
-    try {
-      const response = await transcriptAPI.getTranscriptStatus(lessonId);
-      const data = response.data;
-      
-      setStatus(data);
-      setError(null);
-
-      // Stop polling if completed or failed
-      if (data.status === 'completed' || data.status === 'failed') {
-        stopPolling();
-      }
-
-      attemptsRef.current += 1;
-
-      // Stop if max attempts reached
-      if (attemptsRef.current >= maxAttempts) {
-        stopPolling();
-        setError('Transcription is taking longer than expected');
-      }
-    } catch (err: any) {
-      // Don't stop polling on network errors, just log and continue
-      if (err.code === 'ECONNABORTED' || err.code === 'ETIMEDOUT' || err.code === 'ERR_NETWORK') {
-        console.log('Network timeout, will retry...');
-        return; // Continue polling
-      }
-      
-      setError(err.response?.data?.message || 'Failed to check transcript status');
-      stopPolling();
-    }
-  };
+  const controllerRef = useRef<AbortController | null>(null);
+  const timeoutRef = useRef<number | null>(null);
+  const isMounted = useRef(true);
 
   useEffect(() => {
-    if (!isPolling || !lessonId) return;
+    return () => {
+      isMounted.current = false;
+      if (controllerRef.current) controllerRef.current.abort();
+      if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
-    // Check immediately
-    checkStatus();
+  const shouldPoll = useCallback(() => {
+    if (typeof document !== 'undefined' && document.hidden) return false;
+    return true;
+  }, []);
 
-    // Then poll at interval
-    intervalRef.current = setInterval(checkStatus, pollInterval);
+  const decideInterval = (attempt: number) => {
+    if (attempt < 10) return 3000;
+    if (attempt < 30) return 5000;
+    return 10000;
+  };
+
+  const fetchOnce = useCallback(async (signal?: AbortSignal) => {
+    try {
+      const data = await getTranscriptStatus(lessonId);
+      if (!isMounted.current) return null;
+      setStatus(data.status || 'unknown');
+  setProgress(typeof data.progress === 'number' ? data.progress : undefined);
+      if (data.transcript) setTranscript(data.transcript);
+      return data;
+    } catch (err: any) {
+      if (!isMounted.current) return null;
+      setError(err);
+      return null;
+    }
+  }, [lessonId]);
+
+  const stopPolling = useCallback(() => {
+    setIsPolling(false);
+    if (controllerRef.current) controllerRef.current.abort();
+    if (timeoutRef.current) {
+      window.clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  }, []);
+
+  const startPolling = useCallback(async () => {
+    if (initialTranscript) return;
+    if (!shouldPoll()) return;
+    setIsPolling(true);
+    setAttempts(0);
+    setError(null);
+
+    let attempt = 0;
+    while (isMounted.current && attempt < maxAttempts) {
+      if (!shouldPoll()) {
+        await new Promise((res) => setTimeout(res, 1000));
+        continue;
+      }
+
+      controllerRef.current = new AbortController();
+      try {
+        const data = await fetchOnce(controllerRef.current.signal as any);
+        attempt += 1;
+        setAttempts(attempt);
+
+        if (data && (data.status === 'completed' || data.status === 'failed')) {
+          setStatus(data.status);
+          if (data.transcript) setTranscript(data.transcript);
+          stopPolling();
+          return;
+        }
+      } catch (e: any) {
+        setError(e);
+      }
+
+      const base = decideInterval(attempt);
+      const jitter = Math.floor((Math.random() - 0.5) * 600); // ±300ms
+      const wait = Math.max(0, base + jitter);
+
+      await new Promise<void>((resolve) => {
+        timeoutRef.current = window.setTimeout(() => resolve(), wait);
+      });
+    }
+
+    setIsPolling(false);
+    if (attempt >= maxAttempts) setStatus('failed');
+  }, [decideInterval, fetchOnce, initialTranscript, maxAttempts, shouldPoll, stopPolling]);
+
+  useEffect(() => {
+    if (initialTranscript) {
+      setTranscript(initialTranscript);
+      setStatus('completed');
+    }
+    else {
+      // auto-start polling when no initial transcript
+      startPolling().catch(() => undefined);
+    }
 
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      stopPolling();
     };
-  }, [lessonId, isPolling, pollInterval]);
+  }, [initialTranscript]);
 
-  return {
-    status,
-    isPolling,
-    error,
-    stopPolling,
-    startPolling: () => {
-      attemptsRef.current = 0;
-      setIsPolling(true);
-    },
-  };
-};
+  return { status, transcript, progress, isPolling, attempts, error, startPolling, stopPolling } as const;
+}
+
+export default useTranscriptPolling;
+

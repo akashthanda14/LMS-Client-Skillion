@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { AuthenticatedLayout } from '@/components/auth/AuthenticatedLayout';
 import { VideoPlayer } from '@/components/learn/VideoPlayer';
-import { TranscriptSidebar } from '@/components/learn/TranscriptSidebar';
+import TranscriptViewer from '@/components/lesson/TranscriptViewer';
 import { ProgressTracker } from '@/components/learn/ProgressTracker';
 import { CompletionButton } from '@/components/learn/CompletionButton';
 import { LessonNavigation } from '@/components/learn/LessonNavigation';
@@ -256,8 +256,10 @@ export default function LearnPage() {
 
           {/* Transcript Sidebar - Takes 1 column on large screens */}
           <div className="lg:col-span-1">
-            <TranscriptSidebar
-              transcript={lesson.transcript || 'No transcript available for this lesson.'}
+            <TranscriptViewer
+              lessonId={lessonId}
+              initialTranscript={lesson.transcript || undefined}
+              lessonTitle={lesson.title}
             />
           </div>
         </div>

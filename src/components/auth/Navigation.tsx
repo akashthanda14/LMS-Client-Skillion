@@ -241,7 +241,7 @@ export function Navigation() {
                 onClick={handleLogout}
                 variant="outline"
                 size="sm"
-                className="text-white border-white/30 hover:bg-white/10 hover:text-white"
+                className="text-white bg-white/10 border-white/30"
               >
                 Logout
               </Button>
@@ -342,7 +342,7 @@ export function Navigation() {
                 }}
                 variant="outline"
                 size="sm"
-                className="mt-3 mx-3 text-white border-white/30 hover:bg-white/10"
+                className="mt-3 mx-3 text-white bg-white/10 border-white/30"
               >
                 Logout
               </Button>

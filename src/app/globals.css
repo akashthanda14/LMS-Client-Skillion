@@ -51,8 +51,10 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  /* Primary brand color: professional blue */
+  /* Primary brand color: deeper professional blue */
+  --primary: #0A58CA; /* darker blue */
+  --primary-foreground: #ffffff;
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -80,13 +82,15 @@
 
 /* Brand tokens (primary: #6D28D9) */
 :root {
-  --brand-50: #f5f3ff;
-  --brand-100: #ede9fe;
-  --brand-500: #6d28d9; /* primary */
-  --brand-600: #5b21b6;
-  --brand-soft-a: rgba(109,40,217,0.22);
+  /* Professional blue & white palette */
+  --brand-50: #EBF4FF;     /* lighter */
+  --brand-100: #DBEEFF;
+  --brand-400: #2563eb;    /* support */
+  --brand-500: #0A58CA;    /* primary (main) - darker */
+  --brand-600: #083e9a;    /* dark */
+  --brand-soft-a: rgba(13,110,253,0.12);
   --surface: #ffffff;
-  --surface-border: rgba(15,23,42,0.06);
+  --surface-border: rgba(13,110,253,0.06);
   --muted: #6b7280;
 }
 

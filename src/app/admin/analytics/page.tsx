@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { adminAPI, type GrowthMetrics, type TopCourse, type ActivityItem } from '@/lib/api';
+import { AdminAnalyticsWithProgress } from '@/components/admin/AdminAnalyticsWithProgress';
 import { useRouter } from 'next/navigation';
 
 export default function AdminAnalyticsPage() {
@@ -141,35 +142,7 @@ export default function AdminAnalyticsPage() {
 
         {/* Growth Metrics */}
         {growthMetrics && (
-          <div>
-            <h2 className="text-xl font-bold text-gray-900 mb-4">30-Day Growth Trends</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <GrowthCard
-                title="Users"
-                icon={Users}
-                data={growthMetrics.users}
-                color={{ bg: 'bg-blue-100', text: 'text-blue-600' }}
-              />
-              <GrowthCard
-                title="Enrollments"
-                icon={BookOpen}
-                data={growthMetrics.enrollments}
-                color={{ bg: 'bg-green-100', text: 'text-green-600' }}
-              />
-              <GrowthCard
-                title="Courses"
-                icon={Activity}
-                data={growthMetrics.courses}
-                color={{ bg: 'bg-purple-100', text: 'text-purple-600' }}
-              />
-              <GrowthCard
-                title="Certificates"
-                icon={Award}
-                data={growthMetrics.certificates}
-                color={{ bg: 'bg-orange-100', text: 'text-orange-600' }}
-              />
-            </div>
-          </div>
+          <AdminAnalyticsWithProgress growthMetrics={growthMetrics} />
         )}
 
         {/* Top Courses */}
