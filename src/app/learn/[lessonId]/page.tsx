@@ -3,13 +3,15 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { AuthenticatedLayout } from '@/components/auth/AuthenticatedLayout';
+import { Navigation } from '@/components/auth/Navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import { VideoPlayer } from '@/components/learn/VideoPlayer';
-import TranscriptViewer from '@/components/lesson/TranscriptViewer';
 import { ProgressTracker } from '@/components/learn/ProgressTracker';
 import { CompletionButton } from '@/components/learn/CompletionButton';
 import { LessonNavigation } from '@/components/learn/LessonNavigation';
 import { lessonAPI, courseAPI, LessonDetail, progressAPI } from '@/lib/api';
+import { getApiBase } from '@/lib/apiBase';
+import { getToken } from '@/utils/tokenStorage';
 import { CertificateDownload } from '@/components/progress/CertificateDownload';
 
 interface CourseProgress {
@@ -26,6 +28,7 @@ export default function LearnPage() {
   const params = useParams();
   const router = useRouter();
   const lessonId = params.lessonId as string;
+  const { isAuthenticated } = useAuth();
 
   const [lesson, setLesson] = useState<LessonDetail | null>(null);
   const [lessons, setLessons] = useState<LessonDetail[]>([]);
@@ -44,24 +47,59 @@ export default function LearnPage() {
         setIsLoading(true);
         setError('');
 
-        // Fetch lesson details
-        const lessonResponse = await lessonAPI.getLessonById(lessonId);
-        setLesson(lessonResponse.data);
+  // Fetch lesson details using fetch (avoid axios interceptor that redirects on 401)
+  const base = getApiBase();
 
-        // Fetch all lessons for navigation
-        const lessonsResponse = await courseAPI.getCourseLessons(lessonResponse.data.courseId);
-        setLessons(lessonsResponse.data);
+  // Try to attach an auth token if available. Prefer legacy 'token' key then tokenStorage strategy.
+  const storedToken = typeof window !== 'undefined' ? (localStorage.getItem('token') || null) : null;
+  const utilToken = getToken();
+  const tokenToUse = storedToken || utilToken || '';
 
-        // Fetch course progress (API returns EnrollmentDetail at data)
-        const progressResponse = await courseAPI.getCourseProgress(lessonResponse.data.courseId);
-        const enrollment = progressResponse.data;
-  // save enrollment id for certificate flows
-  setEnrollmentId(enrollment.id);
-        setProgress({
-          progress: enrollment.progress,
-          completedLessons: enrollment.completedLessons,
-          totalLessons: enrollment.totalLessons
-        });
+  const fetchHeaders: Record<string, string> = {};
+  if (tokenToUse) fetchHeaders['Authorization'] = `Bearer ${tokenToUse}`;
+
+  const lessonRes = await fetch(`${base}/api/lessons/${lessonId}`, { headers: fetchHeaders });
+        if (!lessonRes.ok) {
+          // If backend returns 401/403, avoid throwing and instead show a friendly message
+          if (lessonRes.status === 401 || lessonRes.status === 403) {
+            const errJson = await lessonRes.json().catch(()=>({ message: 'Access denied' }));
+            const msg = errJson?.message || 'Login required to view this lesson';
+            setError(msg.includes('Access denied') ? 'This lesson requires sign in to view.' : msg);
+            setIsLoading(false);
+            return;
+          }
+
+          const errText = await lessonRes.text().catch(()=>(''));
+          throw new Error(lessonRes.status === 404 ? 'Lesson not found' : errText || 'Failed to fetch lesson');
+        }
+
+        const lessonJson = await lessonRes.json().catch(()=>({}));
+        const lessonData: LessonDetail = lessonJson.data || lessonJson.lesson || lessonJson;
+        setLesson(lessonData as LessonDetail);
+
+        // Fetch all lessons for navigation (public endpoint)
+  const lessonsRes = await fetch(`${base}/api/courses/${lessonData.courseId}/lessons`, { headers: fetchHeaders });
+        if (lessonsRes.ok) {
+          const lessonsJson = await lessonsRes.json().catch(()=>({}));
+          const lessonsData = lessonsJson.data || lessonsJson.lessons || lessonsJson;
+          setLessons(lessonsData || []);
+        } else {
+          // If lessons list is not accessible, continue without navigation list
+          console.warn('Failed to fetch course lessons:', lessonsRes.status);
+        }
+
+        // Fetch course progress only if authenticated (avoids forcing auth redirect on public video play)
+        if (isAuthenticated) {
+          const progressResponse = await courseAPI.getCourseProgress(lessonData.courseId);
+          const enrollment = progressResponse.data;
+          // save enrollment id for certificate flows
+          setEnrollmentId(enrollment.id);
+          setProgress({
+            progress: enrollment.progress,
+            completedLessons: enrollment.completedLessons,
+            totalLessons: enrollment.totalLessons
+          });
+        }
       } catch (err: any) {
         console.error('Failed to fetch lesson data:', err);
         setError(err.response?.data?.message || 'Failed to load lesson. Please try again.');
@@ -73,7 +111,7 @@ export default function LearnPage() {
     if (lessonId) {
       fetchLessonData();
     }
-  }, [lessonId]);
+  }, [lessonId, isAuthenticated]);
 
   const handleComplete = async () => {
     try {
@@ -140,30 +178,32 @@ export default function LearnPage() {
   // Loading state
   if (isLoading) {
     return (
-      <AuthenticatedLayout>
-        <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="min-h-[60vh]">
+        <Navigation />
+        <div className="flex items-center justify-center">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center space-y-4"
+            className="text-center space-y-4 p-8"
           >
             <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto" />
             <p className="text-gray-600">Loading lesson...</p>
           </motion.div>
         </div>
-      </AuthenticatedLayout>
+      </div>
     );
   }
 
   // Error state
   if (error || !lesson) {
     return (
-      <AuthenticatedLayout>
-        <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="min-h-[60vh]">
+        <Navigation />
+        <div className="flex items-center justify-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="text-center space-y-6 max-w-md mx-auto"
+            className="text-center space-y-6 max-w-md mx-auto p-8"
           >
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
@@ -190,13 +230,14 @@ export default function LearnPage() {
             </div>
           </motion.div>
         </div>
-      </AuthenticatedLayout>
+      </div>
     );
   }
 
   return (
-    <AuthenticatedLayout>
-      <div className="space-y-6">
+    <div>
+      <Navigation />
+      <div className="space-y-6 max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         {/* Progress Tracker */}
         {progress && (
           <ProgressTracker
@@ -254,14 +295,7 @@ export default function LearnPage() {
             </div>
           </div>
 
-          {/* Transcript Sidebar - Takes 1 column on large screens */}
-          <div className="lg:col-span-1">
-            <TranscriptViewer
-              lessonId={lessonId}
-              initialTranscript={lesson.transcript || undefined}
-              lessonTitle={lesson.title}
-            />
-          </div>
+          {/* Transcript removed to avoid extra calls; transcript data not fetched here */}
         </div>
 
         {/* Lesson Navigation */}
@@ -321,6 +355,6 @@ export default function LearnPage() {
           </div>
         )}
       </div>
-    </AuthenticatedLayout>
+    </div>
   );
 }
