@@ -39,20 +39,77 @@ export function LoginForm() {
   };
 
   const onSubmit = async (data: LoginFormData) => {
-    try {
-      setError("");
-      const user = await login(data);
-      addToast("Login successful! Welcome back.", "success");
+  // Implement server wake / retry UX
+  const maxRetries = 3; // retry up to 3 times after initial attempt
+  let attempt = 0;
+    setError('');
 
-      await new Promise((r) => setTimeout(r, 200));
+    // helper to delay
+    const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-      if (user?.role === "ADMIN") router.replace("/admin/dashboard");
-      else if (user?.role === "CREATOR") router.replace("/creator/dashboard");
-      else router.replace("/courses");
-    } catch (err: any) {
-      const errorMessage = err?.response?.data?.message || "Login failed. Please try again.";
-      setError(errorMessage);
-      addToast(errorMessage, "error");
+    while (attempt <= maxRetries) {
+      // start slow-detection timer: if login doesn't resolve in 4s, show waking message
+      let slowTimer: ReturnType<typeof setTimeout> | null = null;
+      let resolved = false;
+
+  try {
+        slowTimer = setTimeout(() => {
+          // show server waking UX
+          setError('Server is waking up... please wait a few seconds.');
+        }, 4000);
+
+        const user = await login(data);
+        resolved = true;
+
+        // clear slow timer and any waking message
+        if (slowTimer) clearTimeout(slowTimer);
+        setError('');
+        addToast('Login successful! Welcome back.', 'success');
+        await new Promise((r) => setTimeout(r, 200));
+
+        if (user?.role === 'ADMIN') router.replace('/admin/dashboard');
+        else if (user?.role === 'CREATOR') router.replace('/creator/dashboard');
+        else router.replace('/courses');
+        return;
+      } catch (err: any) {
+        if (slowTimer) clearTimeout(slowTimer);
+
+        // Determine whether this error is transient (server sleeping) or permanent
+        const status = err?.response?.status;
+        const isNetworkError = !err?.response; // request failed to reach server
+        const isServerError = status === 502 || status === 503 || status === 504 || (status >= 500 && status < 600);
+
+        // If it's a permanent client error (bad creds, validation), show immediately
+        if (status && (status === 400 || status === 401 || status === 403)) {
+          const errorMessage = err?.response?.data?.message || 'Login failed. Please check your credentials.';
+          setError(errorMessage);
+          addToast(errorMessage, 'error');
+          return;
+        }
+
+        // If error is transient (network or server error), retry up to maxRetries
+        if (isNetworkError || isServerError) {
+          attempt += 1;
+          if (attempt > maxRetries) {
+            const errorMessage = err?.response?.data?.message || 'Login failed. Please try again.';
+            setError(errorMessage);
+            addToast(errorMessage, 'error');
+            return;
+          }
+
+          // Otherwise, show waking message and retry after a longer delay (10s)
+          setError('Server is waking up... retrying in a few seconds.');
+          await delay(10000);
+          // loop will retry
+          continue;
+        }
+
+        // Unknown error - show generic message and stop
+        const errorMessage = err?.response?.data?.message || 'Login failed. Please try again.';
+        setError(errorMessage);
+        addToast(errorMessage, 'error');
+        return;
+      }
     }
   };
 
