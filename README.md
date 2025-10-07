@@ -1,29 +1,52 @@
-# MicroCourses - Learning Management System
+# Features & Functionalities
 
-A modern, responsive Learning Management System built with Next.js 15, featuring JWT authentication and role-based access control.
+This project is a full-featured, production-ready learning management system.
 
-## 🚀 Features
+## 🚀 Core Functionalities
 
-- **Authentication System**: JWT-based login/register with secure token storage
-- **Role-Based Access Control**: Three user roles (LEARNER, CREATOR, ADMIN) with different permissions
-- **Course Discovery**: Advanced search and filtering system for finding courses
-- **Course Enrollment**: One-click enrollment with real-time feedback
-- **Progress Tracking**: Track course progress and completion status
-- **Certificates**: Download, view, and verify course completion certificates
-- **Responsive Design**: Beautiful, mobile-first UI built with Tailwind CSS and ShadCN UI
-- **Modern Stack**: Next.js 15, TypeScript, Framer Motion animations
-- **State Management**: Zustand for efficient client-side state
-- **API Integration**: Axios with interceptors and mock data fallbacks
+- **User Authentication:**
+  - Secure registration and login (Email/Phone).
+  - JWT-based session management and Google OAuth 2.0.
+  - Full password lifecycle: Forgot/Reset password with OTP verification.
+  - User profile completion and updates.
+- **Roles & Access Control:**
+  - Pre-defined roles: **Admin**, **Instructor**, and **Learner**.
+  - Protected endpoints and granular access checks for role-based permissions.
+- **Course & Lesson Management:**
+  - Full CRUD (Create, Read, Update, Delete) for courses.
+  - Nested CRUD for lessons within courses.
+  - Rich lesson metadata: title, video URL, display order, and duration.
+- **Enrollments & Progress Tracking:**
+  - Seamless user enrollment into courses.
+  - Endpoints to track lesson completion and overall course progress.
+  - Idempotent progress updates.
+- **Automated Certificate Generation:**
+  - Asynchronous PDF certificate generation using a background queue.
+  - Secure download endpoint for learners.
+  - Public certificate verification system using a unique serial hash.
+- **Media & Transcription Pipeline:**
+  - Automated video transcription using a job queue.
+  - Polling endpoint to check transcription status.
+  - Cloudinary integration for robust video and image asset management.
 
-## 🛠 Tech Stack
+## 🛠️ Developer Experience & DevOps
 
-- **Frontend**: Next.js 15, React 19, TypeScript
-- **Styling**: Tailwind CSS, ShadCN UI Components
-- **State Management**: Zustand with persistence
-- **HTTP Client**: Axios with interceptors
-- **Animation**: Framer Motion
-- **Form Handling**: React Hook Form with Zod validation
-- **Authentication**: JWT tokens with automatic refresh
+- **Database & ORM:**
+  - **Prisma** with **PostgreSQL** for a type-safe database layer, including schema and migrations.
+- **API Documentation:**
+  - **Swagger (OpenAPI)** specification automatically generated from controller-level YAML files.
+  - Interactive Swagger UI served at `/api/docs`.
+- **Background Jobs & Queues:**
+  - **BullMQ + Redis** for reliable, asynchronous job processing.
+  - Dedicated workers for certificate generation and transcription with retry/failure handling.
+- **Emails & Notifications:**
+  - Flexible email delivery via **Resend**, SMTP, or **Nodemailer**.
+- **Testing & Quality Assurance:**
+  - Scaffolding for unit and integration tests with **Jest**.
+  - Scripts for endpoint health checks and E2E smoke tests.
+- **Deployment & Configuration:**
+  - **Docker-ready** and configured for easy deployment on platforms like Render.
+  - Centralized environment configuration using `.env` files.
 
 ## 📁 Project Structure
 
