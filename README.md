@@ -8,6 +8,8 @@ A modern, responsive Learning Management System built with Next.js 15, featuring
 - **Role-Based Access Control**: Three user roles (LEARNER, CREATOR, ADMIN) with different permissions
 - **Course Discovery**: Advanced search and filtering system for finding courses
 - **Course Enrollment**: One-click enrollment with real-time feedback
+- **Progress Tracking**: Track course progress and completion status
+- **Certificates**: Download, view, and verify course completion certificates
 - **Responsive Design**: Beautiful, mobile-first UI built with Tailwind CSS and ShadCN UI
 - **Modern Stack**: Next.js 15, TypeScript, Framer Motion animations
 - **State Management**: Zustand for efficient client-side state
@@ -37,7 +39,11 @@ src/
 │   ├── dashboard/page.tsx          # Main dashboard
 │   ├── layout.tsx                  # Root layout
 │   ├── page.tsx                    # Landing page
-│   └── not-found.tsx              # 404 page
+│   ├── my-courses/page.tsx         # User's enrolled courses
+│   ├── certificates/page.tsx       # User certificates list
+│   ├── certificates/verify/[serialHash]/page.tsx # Certificate verification
+│   ├── learn/[lessonId]/page.tsx   # Lesson player
+│   └── not-found.tsx               # 404 page
 ├── components/
 │   ├── auth/
 │   │   ├── LoginForm.tsx          # Login form component
@@ -51,9 +57,16 @@ src/
 │   │   ├── CourseDetail.tsx       # Course detail display
 │   │   ├── CourseFilters.tsx      # Search and filter controls
 │   │   └── EnrollButton.tsx       # Enrollment functionality
+│   ├── progress/
+│   │   ├── CoursePageCertificateBanner.tsx # Certificate banner
+│   │   └── CertificateDownload.tsx # Download and preview control
+│   ├── certificates/
+│   │   ├── CertificateCard.tsx    # Certificate card
+│   │   └── CertificateDownloadButton.tsx # Download button
 │   └── ui/                        # ShadCN UI components
 ├── hooks/
-│   └── useDebounce.ts             # Debounce hook for search
+│   ├── useDebounce.ts             # Debounce hook for search
+│   └── useTranscriptPolling.ts    # Polling hook for transcripts
 ├── lib/
 │   ├── api.ts                     # API configuration & types
 │   ├── config.ts                  # App configuration
@@ -130,6 +143,40 @@ Headers: { Authorization: "Bearer <token>" }
 Returns: User object with role
 ```
 
+### Course and Enrollment Endpoints
+```
+GET /api/courses
+Returns: List of available courses
+
+GET /api/courses/:id
+Returns: Course details
+
+POST /api/enrollments
+Body: { courseId: string }
+Returns: Enrollment object
+
+GET /api/enrollments/:id/progress
+Returns: Progress data for enrollment
+
+POST /api/enrollments/:id/certificate/generate
+Returns: Certificate generation status
+
+GET /api/enrollments/:id/certificate
+Returns: Certificate metadata
+
+GET /api/enrollments/:id/certificate/download
+Returns: PDF blob for certificate
+```
+
+### Certificate Endpoints
+```
+GET /api/certificates
+Returns: List of user's certificates
+
+GET /api/certificates/verify/:serialHash
+Returns: Certificate verification data
+```
+
 ### User Types
 ```typescript
 interface User {
@@ -149,6 +196,7 @@ Built with ShadCN UI components for consistency:
 - **Layout**: Card, Navigation Menu
 - **Feedback**: Custom Toast notifications
 - **Animation**: Framer Motion for smooth transitions
+- **Certificates**: CertificateCard, CertificateDownload, CoursePageCertificateBanner for certificate management
 
 ## 🔄 State Management
 
@@ -173,6 +221,7 @@ interface AuthStore {
 - **Role-Based Access**: Component-level permission checks
 - **Secure Headers**: CORS and security headers configured
 - **Input Validation**: Zod schemas for all forms
+- **Certificate Verification**: Public verification of certificates by serial hash
 
 ## 🚀 Deployment
 
