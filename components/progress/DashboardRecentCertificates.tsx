@@ -40,7 +40,7 @@ export function DashboardRecentCertificates() {
   }, []);
 
   return (
-    <Card className="p-4">
+    <Card className="p-4 h-full">
       <h3 className="text-lg font-semibold mb-3">Recent Certificates</h3>
 
       {loading ? (
