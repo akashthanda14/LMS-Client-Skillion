@@ -1,292 +1,178 @@
-# User Modules - Authentication & User Management
+<!-- Docs landing for the MicroCourses project -->
+# MicroCourses — Documentation
 
-This folder contains all user authentication and profile management functionality for the Dolchico server.
+A single-page, practical reference for developers working on MicroCourses (LMS-Next). This document consolidates the most important information you need to build, test, and ship the app.
 
-## 📁 Folder Structure
+## Quick overview
 
-```
-user_modules/
-├── controllers/           # Request handlers
-│   ├── authController.js      # Password reset & recovery
-│   ├── userController.js      # Registration & login
-│   ├── adminController.js     # Admin authentication
-│   └── profileController.js   # Email & phone change
-├── services/             # Business logic
-│   ├── userService.js         # User database operations
-│   └── otpService.js          # OTP management
-└── routes/               # API endpoints
-    ├── userRoutes.js          # User auth routes
-    └── adminRoutes.js         # Admin auth routes
-```
+- Project: MicroCourses — a modern Learning Management System built with Next.js 15, TypeScript and Tailwind.
+- Purpose: support learners, creators, and admins with courses, enrollment, progress tracking and certificates.
+- Stack highlights: Next.js 15 (app router), React 19, TypeScript, Tailwind CSS, Zustand, Axios, Framer Motion, ShadCN UI.
 
-## 🔐 Authentication Features
-
-### User Registration & Login
-- **Email Registration**: Register with email, receive verification link and OTP
-- **Phone Registration**: Register with phone number, receive OTP via SMS
-- **Login**: Login with email/phone and password
-- **Profile Completion**: Complete profile after OTP verification
-
-### Password Management
-- **Forgot Password**: Request OTP for password reset
-- **Reset Password**: Reset password using OTP verification
-- **Supports**: Both email and phone number for password reset
-
-### Email & Phone Change
-- **Email Change**: Request and verify email change with OTP
-- **Phone Change**: Request and verify phone number change with OTP
-- **Protected Routes**: Requires authentication
-
-### Admin Authentication
-- **Admin Login**: Secure admin login using environment variables
-
-## 🛣️ API Endpoints
-
-### User Routes (`/api/user/`)
-
-#### Registration & Verification
-```
-POST /register              - Register new user with email or phone
-POST /send-otp              - Alias for registration (send OTP)
-POST /verify-email-otp      - Verify email OTP
-POST /verify-phone-otp      - Verify phone OTP
-POST /verify-otp            - Unified OTP verification
-POST /complete-profile      - Complete user profile after verification
-```
-
-#### Login & Authentication
-```
-POST /login                 - Login with email/phone and password
-GET  /auth/status           - Get current authentication status
-POST /auth/resend-otp       - Resend OTP for verification
-```
-
-#### Password Management
-```
-POST /forgot-password       - Request password reset OTP
-POST /reset-password        - Reset password with OTP
-```
-
-#### Email & Phone Change (Protected)
-```
-POST /request-email-change  - Request email change (requires auth)
-POST /verify-email-change   - Verify email change with OTP
-POST /request-phone-change  - Request phone change (requires auth)
-POST /verify-phone-change   - Verify phone change with OTP
-```
-
-### Admin Routes (`/api/admin/`)
+## What’s in this repo (high level)
 
 ```
-POST /login                 - Admin login
+src/
+├── app/           # Next.js app router pages and route handlers
+├── components/    # Reusable UI components (auth, courses, UI primitives)
+├── lib/           # API helpers, configuration, utilities
+├── store/         # Zustand stores
+├── hooks/         # Reusable React hooks
+└── public/        # Static assets
 ```
 
-## 📝 Controllers
+See the `src/` tree for details. This docs file focuses on getting you productive quickly and covering the project conventions.
 
-### authController.js
-Handles password reset and recovery:
-- `forgotPassword` - Sends OTP for password reset
-- `resetPassword` - Verifies OTP and resets password
+## Getting started (developer)
 
-### userController.js
-Handles user registration and login:
-- `registerUser` - Registers new user with email or phone
-- `verifyEmailOtp` - Verifies email OTP
-- `verifyPhoneOtp` - Verifies phone OTP
-- `completeProfile` - Completes user profile
-- `loginUser` - Authenticates user login
+Prerequisites
+- Node.js 18+ recommended
+- Yarn or npm (project uses npm scripts)
+- Backend API (development mode): set `NEXT_PUBLIC_API_BASE_URL` to a running backend (default: `http://localhost:4000`)
 
-### profileController.js
-Handles profile changes:
-- `requestEmailChange` - Initiates email change process
-- `verifyEmailChange` - Completes email change
-- `requestPhoneChange` - Initiates phone change process
-- `verifyPhoneChange` - Completes phone change
+Install
 
-### adminController.js
-Handles admin authentication:
-- `adminLogin` - Authenticates admin users
-
-## 🔧 Services
-
-### userService.js
-Database operations for users:
-- `createUser` - Creates new user
-- `findUserByEmail` - Finds user by email
-- `findUserByPhone` - Finds user by phone
-- `findUserById` - Finds user by ID
-- `updateProfile` - Updates user profile
-- `updateProfileCompletion` - Completes user profile
-- `verifyUserEmail` - Marks email as verified
-- `verifyUserPhone` - Marks phone as verified
-
-### otpService.js
-OTP management:
-- `storeEmailOTP` - Stores email OTP
-- `verifyEmailOtpService` - Verifies email OTP
-- `verifyEmailOTPByUserId` - Verifies email OTP by user ID
-- `storePhoneOTP` - Stores phone OTP
-- `verifyPhoneOtpService` - Verifies phone OTP
-
-## 🔒 Security Features
-
-1. **OTP Expiration**: All OTPs expire after 10 minutes
-2. **Rate Limiting**: Maximum 3 OTP requests per minute
-3. **Max Attempts**: Maximum 3 verification attempts per OTP
-4. **Password Requirements**:
-   - Minimum 10 characters
-   - At least one uppercase letter
-   - At least one number
-5. **JWT Authentication**: Secure token-based authentication
-6. **Bcrypt Hashing**: Password hashing with salt rounds
-
-## 📦 Dependencies
-
-External dependencies used by user_modules:
-- `bcryptjs` / `bcrypt` - Password hashing
-- `jsonwebtoken` - JWT token generation
-- `validator` - Input validation
-- `@prisma/client` - Database operations
-
-Shared services (from parent project):
-- `mailService.js` - Email sending
-- `smsService.js` - SMS sending
-- `tokenService.js` - Token management
-- `authMiddleware.js` - Authentication middleware
-
-## 🚀 Usage
-
-### Import routes in your main server file:
-
-```javascript
-import userRoutes from './user_modules/routes/userRoutes.js';
-import adminRoutes from './user_modules/routes/adminRoutes.js';
-
-app.use('/api/user', userRoutes);
-app.use('/api/admin', adminRoutes);
+```bash
+git clone <your-repo-url>
+cd microcourses
+npm install
 ```
 
-### Example: User Registration with Email
+Environment
 
-```javascript
-POST /api/user/register
-Content-Type: application/json
+Create a `.env.local` (not committed) with at least:
 
-{
-  "email": "user@example.com"
-}
-
-// Response:
-{
-  "success": true,
-  "message": "Registration successful. Check your email for verification.",
-  "userId": 123,
-  "verificationType": "email",
-  "contactInfo": "user@example.com",
-  "requiresProfileCompletion": true
-}
+```
+NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
 ```
 
-### Example: Password Reset
+Run (dev)
 
-```javascript
-// Step 1: Request OTP
-POST /api/user/forgot-password
-{
-  "emailOrPhone": "user@example.com"
-}
-
-// Step 2: Reset with OTP
-POST /api/user/reset-password
-{
-  "emailOrPhone": "user@example.com",
-  "otp": "123456",
-  "newPassword": "NewSecurePassword123"
-}
+```bash
+npm run dev
 ```
 
-## 🔄 Flow Diagrams
+Build (production)
 
-### Email Registration Flow
-```
-1. POST /register { email }
-   → Creates user
-   → Sends verification email with OTP
-   
-2. POST /verify-email-otp { email, otp }
-   → Verifies OTP
-   → Marks email as verified
-   → Returns userId
-   
-3. POST /complete-profile { userId, name, password }
-   → Updates profile
-   → Returns JWT token
+```bash
+npm run build
+npm run start
 ```
 
-### Phone Registration Flow
-```
-1. POST /register { phoneNumber }
-   → Creates user
-   → Sends OTP via SMS
-   
-2. POST /verify-phone-otp { phoneNumber, otp }
-   → Verifies OTP
-   → Marks phone as verified
-   → Returns userId
-   
-3. POST /complete-profile { userId, name, password }
-   → Updates profile
-   → Returns JWT token
+Lint
+
+```bash
+npm run lint
 ```
 
-### Password Reset Flow
+## Core concepts and patterns
+
+- App Router: pages and server components live under `src/app/`.
+- Client components: use `"use client"` and live alongside server components where necessary.
+- API layer: `src/lib/api.ts` centralizes HTTP calls and helpers (auth, courses, progress, certificates).
+- State: small global state uses Zustand; local UI state handled in components/hooks.
+- Styling: Tailwind CSS + ShadCN patterns for small, composable primitives.
+
+## Authentication & Roles
+
+Three roles are used across the app:
+- LEARNER — enroll and take courses
+- CREATOR — create/manage courses
+- ADMIN — platform administration
+
+Auth flow summary:
+- JWT-based access tokens are returned from the backend and stored client-side via the auth store.
+- `ProtectedRoute` / middleware ensure route-level protection.
+
+## Certificates (developer notes)
+
+The app includes a certificates workflow surfaced in several places (lesson page, course detail, dashboard, user certificates page):
+
+- `src/lib/api.ts` exposes helpers: `getCertificate`, `generateCertificate`, `waitForCertificate`, `downloadCertificate`, `getUserCertificates`, `verifyCertificate`.
+- The frontend supports an idempotent generate + poll flow: call `generateCertificate(enrollmentId)` then `waitForCertificate` to poll the metadata endpoint until the certificate is ready.
+- Download: the client fetches a PDF blob via `downloadCertificate` and triggers user download.
+- Public verification: `GET /api/certificates/verify/:serialHash` returns certificate metadata for a public verification page.
+
+If you’re debugging missing certificates, check the backend worker responsible for generation and the `certificates` table/objects in the backend. The frontend tolerates a missing generate endpoint and surfaces friendly messages.
+
+## Project structure (expanded)
+
+- `src/app/` — route-level components and pages. Notable routes:
+  - `/learn/[lessonId]` — lesson player with progress and certificate banner
+  - `/courses/[id]` — course detail and enrollment
+  - `/my-courses` — learner's active/completed courses and quick download
+  - `/certificates` — user certificates list
+
+- `src/components/` — organized by area:
+  - `auth/` — login/register UI, navigation, protection wrappers
+  - `courses/` — CourseCard, CourseDetail, EnrollButton
+  - `progress/` — certificate banner, download control, polling hooks
+  - `ui/` — Button, Card, Alert, Badge (ShadCN-style primitives)
+
+- `src/lib/api.ts` — central place for REST wrappers. Use it rather than ad-hoc fetch/axios calls.
+
+- `src/hooks/` — hooks used across the app, e.g., polling, debounce, transcript polling
+
+## Development workflow & best practices
+
+- Keep API calls centralized in `src/lib/api.ts`.
+- Prefer small, focused components that accept data via props; lift state to stores only when it must be shared.
+- Type safety: prefer `unknown` in catch blocks, narrow before rendering; avoid `any` unless unavoidable.
+- Lint & types: run `npm run lint` and `npm run build` to surface TypeScript issues early.
+
+## Testing and QA
+
+This project contains no heavy test suite by default. Recommended additions:
+
+- Unit tests: Jest + React Testing Library for components and hooks.
+- Integration tests: Playwright or Cypress for core flows (enroll, progress, certificate generation).
+
+## Deployment
+
+Recommended: Vercel for frontend. Minimal steps:
+
+1. Build: `npm run build`
+2. Deploy using Vercel or Docker (Dockerfile available if you prefer containerized deploy).
+
+Environment variables should include the backend base URL and any secrets required for server-side route handlers.
+
+## Troubleshooting
+
+- Missing certificate metadata after calling generate: verify backend worker logs and DB rows, check storage upload permissions.
+- Type errors during build: run `npm run build` locally and fix TypeScript errors; many issues are due to `unknown` being used directly in JSX — convert to string or narrow types first.
+- Lint failures: run `npm run lint` and address rules — the repo follows strict rules for `no-explicit-any` and `react-hooks/exhaustive-deps`.
+
+## Contributing
+
+1. Fork the repository
+2. Create a branch (`git checkout -b feat/your-feature`)
+3. Make changes, run `npm run lint` and `npm run build` locally
+4. Commit and push, open a PR with a clear description and testing steps
+
+Guidelines
+- Keep PRs small and focused
+- Add types and tests for new behaviors
+- Document API changes in `docs/` and update this landing file when routes or contracts change
+
+## Useful commands
+
+```bash
+npm install
+npm run dev
+npm run build
+npm run lint
 ```
-1. POST /forgot-password { emailOrPhone }
-   → Generates OTP
-   → Sends OTP via email/SMS
-   
-2. POST /reset-password { emailOrPhone, otp, newPassword }
-   → Verifies OTP
-   → Updates password
-   → Returns JWT token
-```
 
-## 📄 Environment Variables
+## Contacts & resources
 
-Required environment variables:
-```
-JWT_SECRET=your_jwt_secret_key
-ADMIN_EMAIL=admin@example.com
-ADMIN_PASSWORD=secure_admin_password
-```
-
-## 🧪 Testing
-
-Each controller includes comprehensive error handling:
-- Input validation
-- Database error handling
-- Rate limiting checks
-- Security validations
-
-## 📞 Support
-
-For issues or questions about user authentication:
-1. Check the API endpoint documentation above
-2. Review error messages in the response
-3. Check server logs for detailed error information
-
-## 🔐 Best Practices
-
-1. Always use HTTPS in production
-2. Keep JWT_SECRET secure and never commit to version control
-3. Implement rate limiting at the API gateway level
-4. Monitor failed login attempts
-5. Regularly rotate admin credentials
-6. Use strong password policies
-7. Implement 2FA for admin accounts (future enhancement)
+- Primary repo: `LMS-Next` (owner: akashthanda14)
+- For architecture notes, see `docs/ARCHITECTURE.md`
 
 ---
 
-**Version**: 1.0.0  
-**Last Updated**: October 2025  
-**Maintained by**: Dolchico Development Team
+This file is intended as the canonical entrypoint for developer docs in `docs/`. If you want, I can:
+
+- (A) Expand this into separate pages (`getting-started.md`, `architecture.md`, `api.md`) and wire a simple index, or
+- (B) Commit the change now with a descriptive message.
+
+Tell me which follow-up you prefer.
