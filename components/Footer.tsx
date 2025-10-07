@@ -34,7 +34,7 @@ export default function Footer() {
 
 					<p className="mt-4 text-sm text-white/90">Micro-credentials and practical projects designed for professionals. Trusted by teams worldwide.</p>
 
-					<div className="mt-6 flex items-center gap-3">
+					<div className="mt-6 flex items-center justify-center md:justify-start gap-3">
 						<a href="#" aria-label="Twitter" className="w-10 h-10 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 transition">
 							<svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M19 7.5c.013.176.013.352.013.528 0 5.377-4.093 11.575-11.575 11.575A11.51 11.51 0 014 18.9c.34.04.69.058 1.041.058 2.027 0 3.89-.69 5.373-1.849a4.094 4.094 0 01-3.824-2.842c.252.038.505.064.774.064.373 0 .747-.05 1.093-.146a4.09 4.09 0 01-3.277-4.01v-.05c.548.305 1.18.49 1.852.51a4.087 4.087 0 01-1.804-3.403c0-.755.203-1.46.557-2.07a11.6 11.6 0 008.427 4.27c-.064-.305-.096-.62-.096-.946 0-2.281 1.847-4.128 4.128-4.128 1.186 0 2.26.498 3.015 1.297a8.236 8.236 0 002.627-1.01 4.12 4.12 0 01-1.813 2.273 8.227 8.227 0 002.364-.647 8.86 8.86 0 01-2.048 2.117z"/></svg>
 						</a>

@@ -210,7 +210,7 @@ export default function LearnPage() {
   return (
     <div>
       <Navigation />
-      <div className="space-y-6 max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+  <div className="space-y-6 max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Progress Tracker */}
         {progress && (
           <ProgressTracker
