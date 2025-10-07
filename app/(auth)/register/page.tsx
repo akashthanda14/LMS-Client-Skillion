@@ -1,6 +1,5 @@
 import RegisterForm from '@/components/auth/NewRegisterForm';
 import Navbar from '@/components/landing/Navbar';
-import Footer from '@/components/landing/Footer';
 
 export default function RegisterPage() {
   return (
@@ -9,7 +8,7 @@ export default function RegisterPage() {
       <main id="main">
         <RegisterForm />
       </main>
-      <Footer />
+  {/* Footer rendered globally in app/layout.tsx */}
     </>
   );
 }

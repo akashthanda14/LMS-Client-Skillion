@@ -24,7 +24,10 @@ export default function Navbar({ forceTransparent = false }: { forceTransparent?
     { href: '#contact', label: 'Contact' },
   ];
 
-  const isScrolled = forceTransparent ? false : scrolled;
+  // When forceTransparent is passed we want the navbar to start transparent,
+  // but still become opaque when the user scrolls. Use the scroll state
+  // directly so scrolled -> true will apply the opaque styles.
+  const isScrolled = scrolled;
 
   return (
     <header className={`fixed inset-x-0 top-0 z-50 transition-all ${isScrolled ? 'backdrop-blur-md bg-white/95 border-b border-[rgba(13,110,253,0.06)] shadow-lg' : 'bg-transparent'}`}>

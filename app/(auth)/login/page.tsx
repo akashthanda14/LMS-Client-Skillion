@@ -2,7 +2,6 @@
 
 import { LoginForm } from '@/components/auth/LoginForm';
 import Navbar from '@/components/landing/Navbar';
-import Footer from '@/components/landing/Footer';
 
 export default function LoginPage() {
   return (
@@ -11,7 +10,7 @@ export default function LoginPage() {
       <main id="main">
         <LoginForm />
       </main>
-      <Footer />
+  {/* Footer rendered globally in app/layout.tsx */}
     </>
   );
 }

@@ -9,13 +9,12 @@ import HowItWorks from "./HowItWorks";
 import Testimonials from "./Testimonials";
 import FAQ from "./FAQ";
 import EmailCTA from "./EmailCTA";
-import Footer from "./Footer";
 import Pricing from "./Pricing";
 
 export default function HeroSection() {
   return (
   <main id="main" className="min-h-screen w-full antialiased text-slate-900">
-      <Navbar />
+      <Navbar forceTransparent />
 
   <section id="home"
         className="relative h-screen w-full bg-cover bg-center text-white overflow-hidden"
@@ -114,7 +113,7 @@ export default function HeroSection() {
         </div>
       </section>
 
-      <Footer />
+  {/* Footer rendered globally in app/layout.tsx */}
     </main>
   );
 }
