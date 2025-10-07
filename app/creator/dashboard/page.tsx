@@ -85,7 +85,8 @@ export default function CreatorDashboardPage() {
 
   return (
     <AuthenticatedLayout>
-      <div className="space-y-8">
+      <div className="relative px-4 py-8 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="space-y-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -120,6 +121,7 @@ export default function CreatorDashboardPage() {
         </motion.div>
 
   {/* Creation modal removed in favor of dedicated route /creator/courses/new */}
+        </div>
       </div>
     </AuthenticatedLayout>
   );

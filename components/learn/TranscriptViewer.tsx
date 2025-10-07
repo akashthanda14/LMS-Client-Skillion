@@ -1,4 +1,4 @@
-'use client';
+ 'use client';
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useTranscriptPolling } from '@/hooks/useTranscriptPolling';
+import useTranscript from '@/hooks/useTranscript';
 
 interface TranscriptViewerProps {
   lessonId: string;
@@ -35,11 +35,10 @@ export function TranscriptViewer({
   const [isExpanded, setIsExpanded] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Use the polling hook (lessonId, initialTranscript)
-  const { status, transcript: polledTranscript, progress, isPolling, error } = useTranscriptPolling(lessonId, initialTranscript ?? undefined);
+  const { loading, transcript: polledTranscript, segments, error } = useTranscript(lessonId);
 
   const transcript = initialTranscript || polledTranscript;
-  const transcriptStatus = status; // 'queued' | 'processing' | 'completed' | 'failed' | 'unknown'
+  const transcriptStatus = loading ? 'processing' : transcript ? 'completed' : 'unknown';
 
   const handleCopy = async () => {
     if (!transcript) return;
@@ -52,12 +51,12 @@ export function TranscriptViewer({
     if (!transcript) return;
     const blob = new Blob([transcript], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${lessonTitle.replace(/[^a-z0-9]/gi, '_')}_transcript.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${lessonTitle.replace(/[^a-z0-9]/gi, '_')}_transcript.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
 
@@ -77,8 +76,8 @@ export function TranscriptViewer({
     );
   };
 
-  // Show loading state while polling
-  if (isPolling && !transcript) {
+  // Show loading state while fetching
+  if (loading && !transcript) {
     return (
       <Card>
         <CardHeader>
@@ -90,11 +89,9 @@ export function TranscriptViewer({
         <CardContent className="space-y-4">
           <Alert>
             <Loader2 className="h-4 w-4 animate-spin" />
-            <AlertDescription className="ml-2">
-              {transcriptStatus === 'queued' && 'Transcription queued...'}
-              {transcriptStatus === 'processing' && `Generating transcript... ${progress || 0}%`}
-              {!transcriptStatus && 'Checking transcript status...'}
-            </AlertDescription>
+              <AlertDescription className="ml-2">
+                {loading ? 'Loading transcript...' : 'Checking transcript status...'}
+              </AlertDescription>
           </Alert>
           <div className="space-y-2">
             <div className="h-4 w-full bg-gray-200 rounded animate-pulse" />
@@ -107,7 +104,7 @@ export function TranscriptViewer({
   }
 
   // Show error state
-  if (error || transcriptStatus === 'failed') {
+  if (error) {
     const errorMessage = typeof error === 'string'
       ? error
       : error instanceof Error
@@ -134,7 +131,7 @@ export function TranscriptViewer({
   }
 
   // Show message if no transcript and not processing
-  if (!transcript && (transcriptStatus === 'unknown')) {
+  if (!transcript && transcriptStatus === 'unknown') {
     return (
       <Card>
         <CardHeader>
@@ -234,9 +231,9 @@ export function TranscriptViewer({
               animate={{ opacity: 1 }}
               className="max-h-96 overflow-y-auto p-4 rounded-lg border border-gray-200 bg-gray-50"
             >
-              <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
-                {getHighlightedText(transcript)}
-              </div>
+        <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
+          {getHighlightedText(transcript)}
+        </div>
             </motion.div>
 
             <p className="text-xs text-gray-500 mt-2">

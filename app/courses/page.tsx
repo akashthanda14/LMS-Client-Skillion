@@ -20,7 +20,8 @@ export default function CoursesPage() {
 
   return (
     <AuthenticatedLayout>
-      <div className="space-y-8">
+      <div className="relative px-4 py-8 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="space-y-8">
         {/* Page Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -86,6 +87,7 @@ export default function CoursesPage() {
         >
           <CourseGrid courses={courses} isLoading={isLoading} />
         </motion.div>
+        </div>
       </div>
     </AuthenticatedLayout>
   );

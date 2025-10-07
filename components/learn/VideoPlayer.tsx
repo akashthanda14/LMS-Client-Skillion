@@ -8,9 +8,11 @@ interface VideoPlayerProps {
   videoUrl: string;
   title: string;
   onVideoEnd?: () => void;
+  onTimeUpdate?: (currentTime: number) => void;
+  onSeek?: (time: number) => void;
 }
 
-export function VideoPlayer({ videoUrl, title, onVideoEnd }: VideoPlayerProps) {
+export function VideoPlayer({ videoUrl, title, onVideoEnd, onTimeUpdate, onSeek }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -23,9 +25,35 @@ export function VideoPlayer({ videoUrl, title, onVideoEnd }: VideoPlayerProps) {
       }
     };
 
+    const handleTimeUpdate = () => {
+      if (video && typeof video.currentTime === 'number') {
+        try {
+          onTimeUpdate?.(video.currentTime);
+        } catch (e) {
+          // swallow
+        }
+      }
+    };
+
+    const handleSeeked = () => {
+      if (video && typeof video.currentTime === 'number') {
+        try {
+          onSeek?.(video.currentTime);
+        } catch (e) {
+          // swallow
+        }
+      }
+    };
+
     video.addEventListener('ended', handleEnded);
-    return () => video.removeEventListener('ended', handleEnded);
-  }, [onVideoEnd]);
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    video.addEventListener('seeked', handleSeeked);
+    return () => {
+      video.removeEventListener('ended', handleEnded);
+      video.removeEventListener('timeupdate', handleTimeUpdate);
+      video.removeEventListener('seeked', handleSeeked);
+    };
+  }, [onVideoEnd, onTimeUpdate, onSeek]);
 
   // Extract Cloudinary video ID from URL if needed
   const getVideoSrc = (url: string) => {

@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Navigation } from '@/components/auth/Navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { VideoPlayer } from '@/components/learn/VideoPlayer';
+import TranscriptViewer from '@/components/lesson/TranscriptViewer';
 import { ProgressTracker } from '@/components/learn/ProgressTracker';
 import { CompletionButton } from '@/components/learn/CompletionButton';
 import { LessonNavigation } from '@/components/learn/LessonNavigation';
@@ -36,6 +37,7 @@ export default function LearnPage() {
   const [enrollmentId, setEnrollmentId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
+  const [currentTime, setCurrentTime] = useState<number | undefined>(undefined);
 
   const getErrorMessage = (err: unknown, fallback = 'An error occurred') => {
     if (err instanceof Error) return err.message;
@@ -248,6 +250,14 @@ export default function LearnPage() {
               <VideoPlayer
                 videoUrl={lesson.videoUrl}
                 title={lesson.title}
+                onTimeUpdate={(t) => setCurrentTime(t)}
+                onSeek={(t) => {
+                  const vid = document.querySelector('video[aria-label]') as HTMLVideoElement | null;
+                  if (vid) {
+                    vid.currentTime = t;
+                    vid.play().catch(() => {});
+                  }
+                }}
               />
             ) : (
               <div className="w-full aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
@@ -266,7 +276,16 @@ export default function LearnPage() {
             </div>
           </div>
 
-          {/* Transcript removed to avoid extra calls; transcript data not fetched here */}
+          {/* Transcript viewer - synced with the player */}
+          <div className="lg:col-span-1">
+            <TranscriptViewer lessonId={lessonId} lessonTitle={lesson.title} currentTime={currentTime} onSeek={(t) => {
+              const vid = document.querySelector('video[aria-label]') as HTMLVideoElement | null;
+              if (vid) {
+                vid.currentTime = t;
+                vid.play().catch(() => {});
+              }
+            }} />
+          </div>
         </div>
 
         {/* Lesson Navigation */}

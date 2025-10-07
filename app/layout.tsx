@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import BrandOrbs from '@/components/presentational/BrandOrbs';
+import Footer from '@/components/Footer';
 import { ToastProvider } from "@/components/ui/toast";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CourseProvider } from "@/contexts/CourseContext";
@@ -34,9 +35,10 @@ export default function RootLayout({
           <CourseProvider>
             <AppQueryProvider>
               <ToastProvider>
-                <div className="relative min-h-screen w-full">
+                <div className="relative min-h-screen w-full flex flex-col">
                   <BrandOrbs />
-                  {children}
+                  <main className="flex-1">{children}</main>
+                  <Footer />
                 </div>
               </ToastProvider>
             </AppQueryProvider>

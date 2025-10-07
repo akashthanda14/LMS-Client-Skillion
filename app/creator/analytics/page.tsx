@@ -4,7 +4,8 @@ export const dynamic = 'force-dynamic';
 
 export default function CreatorAnalyticsPage() {
   return (
-    <div className="p-6 space-y-6">
+    <div className="relative px-4 py-8 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">Creator Analytics</h1>
       <p className="text-gray-600 text-sm max-w-prose">
         This page will display analytics for your courses (views, enrollments, completion rates, revenue trends).
@@ -34,5 +35,6 @@ export default function CreatorAnalyticsPage() {
         </ul>
       </div>
     </div>
+  </div>
   );
 }

@@ -7,9 +7,8 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/toast';
 import { User } from '@/lib/api';
-import { Search, Menu, X, TrendingUp } from 'lucide-react';
+import { Search, Menu, X } from 'lucide-react';
 import { useState, FormEvent, useEffect } from 'react';
-import { progressAPI } from '@/lib/api';
 
 interface NavigationItem {
   label: string;
@@ -39,11 +38,7 @@ const learnerNavItems: NavigationItem[] = [
     href: '/progress',
     roles: ['LEARNER'],
   },
-  {
-    label: 'Certificates',
-    href: '/certificates',
-    roles: ['LEARNER'],
-  },
+  // Certificates removed per request
 ];
 
 const creatorNavItems: NavigationItem[] = [
@@ -117,31 +112,11 @@ export function Navigation() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [overallProgress, setOverallProgress] = useState<number | null>(null);
 
   if (!user) return null;
 
-  // Fetch overall progress for learners
   useEffect(() => {
-    if (user.role === 'LEARNER') {
-      const fetchProgress = async () => {
-        try {
-          const response = await progressAPI.getProgress();
-          if (response.data.enrollments && response.data.enrollments.length > 0) {
-            // Calculate average progress across all enrollments
-            const totalProgress = response.data.enrollments.reduce((sum: number, enrollment: any) => {
-              const progress = typeof enrollment.progress === 'number' ? enrollment.progress : 0;
-              return sum + progress;
-            }, 0);
-            const avgProgress = Math.round(totalProgress / response.data.enrollments.length);
-            setOverallProgress(avgProgress);
-          }
-        } catch (error) {
-          console.error('Failed to fetch progress:', error);
-        }
-      };
-      fetchProgress();
-    }
+    // noop for now — kept in case future nav effects are needed
   }, [user.role]);
 
   const handleLogout = () => {
@@ -175,83 +150,61 @@ export function Navigation() {
   };
 
   return (
+    <>
     <motion.nav
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="bg-[var(--brand-600)] shadow-lg sticky top-0 z-50 text-white"
+      className={`fixed inset-x-0 top-0 z-50 bg-[var(--brand-600)] shadow-lg text-white`}
     >
-      {/* Main Navigation Bar - Full Width */}
-      <div className="w-full border-b border-white/10">
-        <div className="w-full px-6 lg:px-12">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <div className="flex items-center flex-shrink-0">
-              <Link href="/dashboard">
-                <motion.h1 
-                  whileHover={{ scale: 1.05 }}
-                  className="text-2xl font-bold text-white"
-                >
-                  MicroCourses
-                </motion.h1>
-              </Link>
-            </div>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-20">
+          {/* Left: logo */}
+          <div className="flex items-center gap-4">
+            <Link href="/dashboard" className="flex items-center gap-3 focus:outline-none rounded">
+              <span className="w-10 h-10 rounded-md flex items-center justify-center bg-[var(--primary)] text-white">LM</span>
+              <span className="font-bold text-white">MicroCourses</span>
+            </Link>
+          </div>
 
-            {/* Desktop Search Bar - Centered */}
-            <div className="hidden md:flex flex-1 max-w-2xl mx-8">
-              <form onSubmit={handleSearch} className="w-full">
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="What do you want to learn?"
-                    className="w-full px-4 py-2 pl-10 pr-4 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15 transition-all"
-                  />
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
-                </div>
-              </form>
-            </div>
-
-            {/* Desktop Navigation & User Info */}
-            <div className="hidden md:flex items-center space-x-6">
-              {navItems.slice(0, 3).map((item, index) => (
-                <motion.div
-                  // Use composite key to avoid duplicate keys when multiple labels share same href
-                  key={`${item.href}-${item.label}`}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <Link
-                    href={item.href}
-                    className="text-white/90 hover:text-white px-3 py-2 text-sm font-medium transition-colors duration-200"
-                  >
-                    {item.label}
-                  </Link>
-                </motion.div>
+          {/* Center: role nav links (desktop) + small centered search */}
+          <div className="hidden md:flex flex-1 justify-center items-center gap-6">
+            {/* Desktop center links - shown on large screens similar to landing */}
+            <nav className="hidden lg:flex items-center gap-6 text-sm">
+              {navItems.map((item) => (
+                <Link key={`${item.href}-${item.label}`} href={item.href} className="relative px-2 py-1 hover:text-white/90 transition-colors duration-200 focus:outline-none">
+                  <span className="inline-block">{item.label}</span>
+                </Link>
               ))}
-              
-              <div className="h-6 w-px bg-white/20" />
-              
-              <Link href="/profile" className="text-sm font-medium text-white/90 hover:text-white transition-colors">
-                {user.name}
-              </Link>
-              <Button
-                onClick={handleLogout}
-                variant="outline"
-                size="sm"
-                className="text-white bg-white/10 border-white/30"
-              >
-                Logout
-              </Button>
+            </nav>
+
+            {/* Small centered search input */}
+            <form onSubmit={handleSearch} className="">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search"
+                  className="w-40 px-3 py-1 pl-8 pr-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all"
+                />
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-white/60" />
+              </div>
+            </form>
+          </div>
+
+          {/* Right: profile/logout or mobile toggle */}
+          <div className="flex items-center gap-4">
+            <div className="hidden lg:flex items-center gap-4">
+              <Link href="/profile" className="text-sm font-medium text-white">{user.name}</Link>
+              <Button onClick={handleLogout} variant="outline" size="sm" className="text-white bg-white/10 border-white/30">Logout</Button>
             </div>
 
-            {/* Mobile Menu Button */}
-            <div className="md:hidden">
+            <div className="lg:hidden">
               <button
+                aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="text-white p-2"
+                className={`p-2 rounded-md focus:outline-none focus:ring-4 focus:ring-[rgba(13,110,253,0.12)] ${isMobileMenuOpen ? 'text-black' : 'text-white'} z-60 relative`}
               >
                 {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
@@ -260,96 +213,46 @@ export function Navigation() {
         </div>
       </div>
 
-      {/* Mobile Search Bar */}
-      <div className="md:hidden bg-[var(--brand-600)] px-4 pb-3">
-        <form onSubmit={handleSearch}>
-          <div className="relative">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="What do you want to learn?"
-              className="w-full px-4 py-2 pl-10 pr-4 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30"
-            />
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
-          </div>
-        </form>
-      </div>
+  {/* overall progress removed for learners */}
 
-      {/* Progress Bar for Learners */}
-      {user.role === 'LEARNER' && overallProgress !== null && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          transition={{ duration: 0.3 }}
-          className="bg-[var(--brand-700)] border-t border-white/10"
-        >
-          <div className="w-full px-6 lg:px-12 py-3">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-white/80" />
-                <span className="text-sm font-medium text-white/90">Overall Progress</span>
-              </div>
-              <span className="text-sm font-semibold text-white">{overallProgress}%</span>
-            </div>
-            <div className="relative w-full h-2 bg-white/20 rounded-full overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${overallProgress}%` }}
-                transition={{ duration: 0.8, ease: 'easeOut' }}
-                className="absolute top-0 left-0 h-full bg-gradient-to-r from-green-400 to-blue-400 rounded-full"
-              />
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Mobile Navigation Menu */}
+      {/* Mobile Drawer (white background like landing) */}
       {isMobileMenuOpen && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          className="md:hidden bg-[var(--brand-600)] border-t border-white/10"
-        >
-          <div className="px-4 pt-2 pb-3 space-y-1">
-            {navItems.map((item) => (
-              <Link
-                // Composite key ensures uniqueness even if hrefs repeat
-                key={`${item.href}-${item.label}`}
-                href={item.href}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="text-white/90 hover:text-white hover:bg-white/10 block px-3 py-2 rounded-md text-base font-medium transition-colors"
-              >
-                {item.label}
-              </Link>
-            ))}
-            <div className="border-t border-white/10 pt-3 mt-3">
-              <Link
-                href="/profile"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="text-white/90 hover:text-white hover:bg-white/10 block px-3 py-2 rounded-md text-base font-medium"
-              >
-                Profile: {user.name}
-              </Link>
-              <span className={`inline-flex items-center mx-3 mt-2 px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(user.role)}`}>
-                {user.role.toLowerCase()}
-              </span>
+        <div className="fixed top-0 right-0 h-full w-[320px] bg-white shadow-lg transform transition-transform duration-300 z-40">
+          <div className="p-4 flex items-center justify-between border-b">
+            <div className="flex items-center gap-3">
+              <span className="w-10 h-10 rounded-md flex items-center justify-center bg-[var(--primary)] text-white">LM</span>
+              <div className="font-semibold text-lg">MicroCourses</div>
+            </div>
+            <button aria-label="Close menu" onClick={() => setIsMobileMenuOpen(false)} className="p-2 rounded focus:outline-none">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="p-4 overflow-auto">
+            <nav className="flex flex-col gap-6" aria-label="Mobile navigation">
+              {navItems.map((item) => (
+                <Link key={`${item.href}-${item.label}`} href={item.href} onClick={() => setIsMobileMenuOpen(false)} className="text-lg text-[#1a1f36]">{item.label}</Link>
+              ))}
+            </nav>
+
+            <div className="mt-8">
+              <Link href="/profile" className="block text-sm text-[#4a5568] mb-3">Profile: {user.name}</Link>
+              <Button asChild className="w-full"><Link href="/login">Sign In</Link></Button>
               <Button
-                onClick={() => {
-                  handleLogout();
-                  setIsMobileMenuOpen(false);
-                }}
+                onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
                 variant="outline"
                 size="sm"
-                className="mt-3 mx-3 text-white bg-white/10 border-white/30"
+                className="mt-3 w-full text-black bg-transparent"
               >
                 Logout
               </Button>
             </div>
           </div>
-        </motion.div>
+        </div>
       )}
     </motion.nav>
+    {/* spacer to prevent page content from being hidden under fixed header */}
+    <div className="h-20" aria-hidden />
+    </>
   );
 }

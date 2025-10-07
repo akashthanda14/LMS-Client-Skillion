@@ -1,7 +1,7 @@
-'use client';
+ 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import useTranscriptPolling from '@/hooks/useTranscriptPolling';
+import useTranscript from '@/hooks/useTranscript';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
@@ -10,18 +10,19 @@ interface Props {
   lessonId: string;
   initialTranscript?: string;
   lessonTitle?: string;
+  currentTime?: number | undefined;
+  onSeek?: (time: number) => void;
 }
 
-export function TranscriptViewer({ lessonId, initialTranscript, lessonTitle }: Props) {
-  const { status, transcript, isPolling, attempts, startPolling, stopPolling } = useTranscriptPolling(lessonId, initialTranscript);
+export function TranscriptViewer({ lessonId, initialTranscript, lessonTitle, currentTime, onSeek }: Props) {
+  const { loading, transcript, segments, error } = useTranscript(lessonId);
   const [collapsed, setCollapsed] = useState(false);
   const { addToast } = useToast();
   const regionRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!initialTranscript) startPolling();
-    return () => stopPolling();
-  }, [initialTranscript, startPolling, stopPolling]);
+    // noop: single-fetch hook handles data fetching
+  }, [lessonId]);
 
   const handleCopy = async () => {
     try {
@@ -58,14 +59,14 @@ export function TranscriptViewer({ lessonId, initialTranscript, lessonTitle }: P
         </div>
       </div>
 
-      {!transcript && (status === 'queued' || status === 'processing') && (
+      {!transcript && loading && (
         <div className="flex items-center gap-3 text-sm text-gray-600">
           <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-          <span>Transcript {status}… (attempts: {attempts})</span>
+          <span>Loading transcript…</span>
         </div>
       )}
 
-      {!transcript && status === 'failed' && (
+  {!transcript && Boolean(error) && (
         <div className="text-sm text-gray-700">
           The transcript is not available. Please <a className="text-blue-600 underline" href="/contact">contact support</a> or try again later.
         </div>
@@ -73,7 +74,9 @@ export function TranscriptViewer({ lessonId, initialTranscript, lessonTitle }: P
 
       {transcript && (
         <div className={`mt-3 ${collapsed ? 'hidden' : 'block'}`}>
-          <pre className="whitespace-pre-wrap overflow-auto max-h-72 text-sm text-gray-800">{transcript}</pre>
+          <div className="whitespace-pre-wrap overflow-auto max-h-72 text-sm text-gray-800">
+            <pre className="whitespace-pre-wrap">{transcript}</pre>
+          </div>
         </div>
       )}
     </div>
