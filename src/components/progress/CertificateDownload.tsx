@@ -178,7 +178,7 @@ export function CertificateDownload({ enrollmentId, courseTitle }: CertificateDo
 
       {/* Preview Modal */}
       <AnimatePresence>
-        {showPreview && (pdfUrl || jsonPreview) && (
+        {showPreview && (pdfUrl || jsonPreview != null) && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             {/* Backdrop */}
             <motion.div
@@ -223,9 +223,9 @@ export function CertificateDownload({ enrollmentId, courseTitle }: CertificateDo
                   className="w-full h-full"
                   title="Certificate Preview"
                 />
-              ) : jsonPreview ? (
+              ) : jsonPreview != null ? (
                 <div className="p-6 overflow-auto h-full">
-                  <pre className="whitespace-pre-wrap text-sm">{JSON.stringify(jsonPreview, null, 2)}</pre>
+                  <pre className="whitespace-pre-wrap text-sm">{JSON.stringify(jsonPreview as any, null, 2)}</pre>
                 </div>
               ) : null}
             </motion.div>

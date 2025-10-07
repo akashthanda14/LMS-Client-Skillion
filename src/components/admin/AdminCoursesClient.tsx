@@ -24,6 +24,9 @@ export default function AdminCoursesClient() {
     queryFn: () => getCoursesForReview(activeTab === 'ALL' ? undefined : activeTab),
   });
 
+  // Narrow unknown shapes returned by react-query for TS build
+  const statusCounts = data?.data ? (data.data as any).statusCounts : undefined;
+
   const getStatusBadge = (status: string) => {
     const variants = {
       DRAFT: { variant: 'secondary', icon: FileText, label: 'Draft' },
@@ -61,20 +64,20 @@ export default function AdminCoursesClient() {
             Review and manage submitted courses
           </p>
         </div>
-        {data?.data?.statusCounts && (
+  {statusCounts && (
           <Card className="w-fit">
             <CardContent className="pt-6">
               <div className="flex gap-6 text-sm">
                 <div>
                   <p className="text-muted-foreground">Pending</p>
                   <p className="text-2xl font-bold text-yellow-600">
-                    {data.data.statusCounts.PENDING}
+        {statusCounts?.PENDING ?? 0}
                   </p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Published</p>
                   <p className="text-2xl font-bold text-green-600">
-                    {data.data.statusCounts.PUBLISHED}
+        {statusCounts?.PUBLISHED ?? 0}
                   </p>
                 </div>
               </div>
@@ -84,18 +87,18 @@ export default function AdminCoursesClient() {
       </div>
 
       <div className="flex gap-2 items-center">
-        {['PENDING', 'PUBLISHED', 'REJECTED', 'DRAFT', 'ALL'].map((tab) => (
+            {['PENDING', 'PUBLISHED', 'REJECTED', 'DRAFT', 'ALL'].map((tab) => (
           <Button
             key={tab}
             variant={activeTab === tab ? 'default' : 'ghost'}
             onClick={() => setActiveTab(tab)}
           >
             {tab === 'PENDING' ? 'Pending' : tab === 'PUBLISHED' ? 'Published' : tab === 'REJECTED' ? 'Rejected' : tab === 'DRAFT' ? 'Drafts' : 'All Courses'}
-            {tab === 'PENDING' && data?.data?.statusCounts && data.data.statusCounts.PENDING > 0 && (
-              <Badge variant="secondary" className="ml-2">
-                {data.data.statusCounts.PENDING}
-              </Badge>
-            )}
+                {tab === 'PENDING' && statusCounts && (statusCounts.PENDING ?? 0) > 0 && (
+                  <Badge variant="secondary" className="ml-2">
+                    {statusCounts.PENDING}
+                  </Badge>
+                )}
           </Button>
         ))}
       </div>

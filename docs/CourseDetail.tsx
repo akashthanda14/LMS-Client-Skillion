@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CourseDetail as CourseDetailType, courseAPI } from '@/lib/api';
-import { EnrollButton } from './EnrollButton';
+import { EnrollButton } from '@/components/courses/EnrollButton';
 import { Clock, Users, BookOpen, CheckCircle, Play, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';

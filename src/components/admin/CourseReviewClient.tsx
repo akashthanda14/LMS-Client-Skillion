@@ -82,8 +82,9 @@ export default function CourseReviewClient({ courseId }: { courseId: string }) {
     );
   }
 
-  const course = data.data.course;
-  const canReview = course.status === 'PENDING';
+  // narrow to any to satisfy TS checks; service returns structured course object
+  const course = (data.data.course as any);
+  const canReview = course?.status === 'PENDING';
 
   const lessons: any[] = course.lessons || [];
   const currentLessonIndex = selectedLesson ? lessons.findIndex(l => l.id === selectedLesson) : -1;

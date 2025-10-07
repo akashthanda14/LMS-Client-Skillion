@@ -108,6 +108,11 @@ export function TranscriptViewer({
 
   // Show error state
   if (error || transcriptStatus === 'failed') {
+    const errorMessage = typeof error === 'string'
+      ? error
+      : error instanceof Error
+        ? error.message
+        : 'Failed to generate transcript';
     return (
       <Card>
         <CardHeader>
@@ -120,7 +125,7 @@ export function TranscriptViewer({
       <Alert className="border-red-200 bg-red-50">
             <XCircle className="h-4 w-4 text-red-600" />
             <AlertDescription className="ml-2 text-red-800">
-        {error || 'Failed to generate transcript'}
+        {errorMessage}
             </AlertDescription>
           </Alert>
         </CardContent>
