@@ -66,9 +66,18 @@ export default function ReviewCreatorsPage() {
 
       // Clear success message after 5 seconds
       setTimeout(() => setSuccessMessage(''), 5000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Action failed:', err);
-      alert(err.response?.data?.message || 'Action failed. Please try again.');
+      if (typeof err === 'object' && err !== null) {
+        const e = err as Record<string, unknown>;
+        const response = e['response'] as Record<string, unknown> | undefined;
+        const message = response && response['data'] && typeof (response['data'] as any)['message'] === 'string'
+          ? (response['data'] as any)['message'] as string
+          : undefined;
+        alert(message || 'Action failed. Please try again.');
+      } else {
+        alert('Action failed. Please try again.');
+      }
       throw err; // Re-throw to keep modal open
     } finally {
       setActionLoading(false);

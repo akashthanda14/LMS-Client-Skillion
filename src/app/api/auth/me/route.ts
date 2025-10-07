@@ -51,11 +51,12 @@ export async function GET(request: NextRequest) {
 
     try {
       // Verify the JWT token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
-      
+      interface JwtPayload { email?: string; [key: string]: unknown }
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as JwtPayload;
+
       // Find user by email from the token
-      const user = mockUsers[decoded.email];
-      
+      const user = decoded?.email ? mockUsers[decoded.email] : undefined;
+
       if (!user) {
         return NextResponse.json(
           { success: false, error: 'User not found' },
@@ -67,7 +68,8 @@ export async function GET(request: NextRequest) {
         success: true,
         user
       });
-    } catch (jwtError) {
+    } catch (err) {
+      // jwt.verify may throw; treat as invalid token
       return NextResponse.json(
         { success: false, error: 'Invalid token' },
         { status: 401 }

@@ -1,5 +1,11 @@
 import { useState, useCallback } from 'react';
-import { courseAPI, EnrollmentResponse } from '@/lib/api';
+import { courseAPI } from '@/lib/api';
+
+const getErrorMessage = (err: unknown, fallback = 'Failed to enroll in course') => {
+  if (err instanceof Error) return err.message;
+  const resp = err as unknown as { response?: { data?: { message?: string } } } | null;
+  return resp?.response?.data?.message ?? fallback;
+}
 
 interface UseEnrollmentReturn {
   enroll: (courseId: string) => Promise<void>;
@@ -25,9 +31,9 @@ export function useEnrollment(onSuccess?: () => void): UseEnrollmentReturn {
       if (response.success) {
         onSuccess?.();
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Enrollment failed:', err);
-      const errorMessage = err.response?.data?.message || 'Failed to enroll in course';
+      const errorMessage = getErrorMessage(err, 'Failed to enroll in course');
       setError(errorMessage);
       throw err;
     } finally {

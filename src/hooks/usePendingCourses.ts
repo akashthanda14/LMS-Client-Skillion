@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { adminAPI, type CourseForReview } from '@/lib/api';
 
+const getErrorMessage = (err: unknown, fallback = 'Failed to load courses') => {
+  if (err instanceof Error) return err.message;
+  const resp = err as unknown as { response?: { data?: { message?: string } } } | null;
+  return resp?.response?.data?.message ?? fallback;
+}
+
 interface UsePendingCoursesReturn {
   courses: CourseForReview[];
   isLoading: boolean;
@@ -24,9 +30,9 @@ export function usePendingCourses(): UsePendingCoursesReturn {
       setError(null);
       const response = await adminAPI.getCoursesPending();
       setCourses(response.data.courses || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to fetch pending courses:', err);
-      setError(err.response?.data?.message || 'Failed to load courses');
+      setError(getErrorMessage(err, 'Failed to load courses'));
     } finally {
       setIsLoading(false);
     }
@@ -44,7 +50,7 @@ export function usePendingCourses(): UsePendingCoursesReturn {
     try {
       await adminAPI.publishCourse(id);
       // Success - keep optimistic update
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Rollback on error
       setCourses(originalCourses);
       throw err;
@@ -64,7 +70,7 @@ export function usePendingCourses(): UsePendingCoursesReturn {
     try {
       await adminAPI.rejectCourse(id, { feedback });
       // Success - keep optimistic update
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Rollback on error
       setCourses(originalCourses);
       throw err;

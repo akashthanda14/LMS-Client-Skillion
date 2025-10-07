@@ -104,7 +104,7 @@ export interface LoginRequest {
 }
 
 export interface AuthResponse {
-  requiresVerification: any;
+  requiresVerification?: unknown;
   success: boolean;
   message: string;
   token: string;
@@ -238,7 +238,7 @@ export interface CreatorStatusResponse {
 }
 
 export interface CreatorStats {
-  totalStudents: any;
+  totalStudents: number | string;
   totalCourses: number;
   publishedCourses: number;
   draftCourses: number;
@@ -321,7 +321,7 @@ export interface CloudinaryUploadCredentials {
   cloudName: string;
   folder: string;
   resourceType: string;
-  eager?: any[];
+  eager?: unknown[];
   eagerAsync?: boolean;
 }
 
@@ -444,7 +444,6 @@ export interface CompleteLessonResponse {
     };
   };
 }
-``
 export interface EnrollmentStatusResponse {
   success: boolean;
   data: {
@@ -501,7 +500,8 @@ export interface GetApplicationDetailResponse {
 }
 
 export interface ApplicationApproveRequest {
-  // No fields required, but can send optional metadata
+  // Optional metadata allowed; represent as an open record
+  [key: string]: unknown;
 }
 
 export interface ApplicationRejectRequest {
@@ -567,7 +567,7 @@ export interface GetCourseDetailResponse {
 }
 
 export interface CoursePublishRequest {
-  // No fields required, but can send optional metadata
+  [key: string]: unknown;
 }
 
 export interface CourseRejectRequest {
@@ -703,7 +703,7 @@ export interface ActivityItem {
   type: 'enrollment' | 'completion' | 'course_published' | 'application_approved';
   description: string;
   timestamp: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 export interface GetRecentActivityResponse {
@@ -748,13 +748,13 @@ export const authAPI = {
   },
 
   // Check if user exists (email or phone) - used by frontend contact check
-  checkUser: async (data: { emailOrPhone: string }): Promise<any> => {
+  checkUser: async (data: { emailOrPhone: string }): Promise<{ exists: boolean; contact?: string } | unknown> => {
     const response = await api.post('/api/user/auth/check-user', data);
     return response.data;
   },
 
   // Send OTP (existing user flow)
-  sendOTP: async (data: { emailOrPhone: string }): Promise<any> => {
+  sendOTP: async (data: { emailOrPhone: string }): Promise<{ success: boolean; message?: string } | unknown> => {
     const response = await api.post('/api/user/auth/send-otp', data);
     return response.data;
   },
@@ -770,7 +770,8 @@ export const authAPI = {
     return response.data;
   },
 
-  changePassword: async (data: ChangePasswordRequest): Promise<{ success: boolean; message: string }> => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  changePassword: async (_data: ChangePasswordRequest): Promise<{ success: boolean; message: string }> => {
     // Note: Backend doesn't have dedicated change-password endpoint
     // This would need to be implemented using /api/auth/me + custom logic
     throw new Error('Change password endpoint not implemented in backend. Use forgot password flow instead.');
@@ -840,7 +841,7 @@ export const courseAPI = {
       const response = await api.get<GetCoursesResponse>(`/api/courses?${params.toString()}`);
       // Extract courses array from response
       return response.data.courses;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching courses:', error);
       throw error;
     }
@@ -851,7 +852,7 @@ export const courseAPI = {
       const response = await api.get<GetCourseByIdResponse>(`/api/courses/${id}`);
       // Extract course object from response
       return response.data.course;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching course:', error);
       throw error;
     }
@@ -861,9 +862,11 @@ export const courseAPI = {
     try {
       const response = await api.post<EnrollmentResponse>(`/api/courses/${courseId}/enroll`);
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Fallback to mock response for development
-      if (error.code === 'ECONNREFUSED' || error.response?.status >= 500) {
+  const err = error as { code?: string; response?: { status?: number } };
+  const status = err.response?.status ?? 0;
+  if (err.code === 'ECONNREFUSED' || status >= 500) {
         // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 800));
         
@@ -1020,14 +1023,14 @@ export const creatorAPI = {
   },
 
   // Upload thumbnail to Cloudinary
-  uploadThumbnail: async (credentials: any, file: File, onProgress?: (progress: number) => void): Promise<string> => {
+  uploadThumbnail: async (credentials: CloudinaryUploadCredentials, file: File): Promise<string> => {
     const formData = new FormData();
     formData.append('file', file);
     
     // Add signed parameters in alphabetical order (backend signs: folder, public_id, timestamp)
     formData.append('folder', credentials.folder);
     formData.append('public_id', credentials.publicId);
-    formData.append('timestamp', credentials.timestamp);
+  formData.append('timestamp', String(credentials.timestamp));
     
     // Add signature and api_key (not signed but required)
     formData.append('signature', credentials.signature);
@@ -1049,14 +1052,14 @@ export const creatorAPI = {
   },
 
   // Upload video to Cloudinary with progress tracking
-  uploadVideo: async (credentials: any, file: File, onProgress?: (progress: number) => void): Promise<{ url: string; duration: number }> => {
+  uploadVideo: async (credentials: CloudinaryUploadCredentials, file: File, onProgress?: (progress: number) => void): Promise<{ url: string; duration: number }> => {
     const formData = new FormData();
     formData.append('file', file);
     
     // Add signed parameters in alphabetical order (backend signs: folder, public_id, timestamp)
     formData.append('folder', credentials.folder);
     formData.append('public_id', credentials.publicId);
-    formData.append('timestamp', credentials.timestamp);
+  formData.append('timestamp', String(credentials.timestamp));
     
     // Add signature and api_key (not signed but required)
     formData.append('signature', credentials.signature);
@@ -1332,8 +1335,9 @@ export const progressAPI = {
         }
 
         // If server returned 200 but no certificate payload yet, wait and retry
-      } catch (err: any) {
+      } catch (error: unknown) {
         // If 404 Not Found, certificate isn't created yet - continue polling
+        const err = error as { response?: { status?: number } };
         if (err.response?.status === 404) {
           // continue polling
         } else {
@@ -1363,8 +1367,16 @@ export const progressAPI = {
     return response.data as GetCertificatesResponse;
   },
 
+  // Request backend to enqueue/generate certificate for an enrollment (idempotent)
+  generateCertificate: async (enrollmentId: string): Promise<{ success: boolean; message?: string }> => {
+    const response = await api.post(`/api/enrollments/${enrollmentId}/certificate/generate`);
+    // Normalize common shapes
+    if (response.data && typeof response.data === 'object') return response.data as { success: boolean; message?: string };
+    return { success: true, message: 'Generation requested' };
+  },
+
   // Download certificate PDF (returns blob URL)
-  downloadCertificate: async (enrollmentId: string): Promise<{ type: 'pdf'; url: string } | { type: 'json'; data: any }> => {
+  downloadCertificate: async (enrollmentId: string): Promise<{ type: 'pdf'; url: string } | { type: 'json'; data: unknown }> => {
     // Try to fetch as blob first; if backend returns JSON (current dev behavior), return parsed JSON
     const response = await api.get(`/api/enrollments/${enrollmentId}/certificate/download`, {
       responseType: 'blob',
@@ -1384,7 +1396,7 @@ export const progressAPI = {
       const text = await response.data.text();
       const json = JSON.parse(text);
       return { type: 'json', data: json };
-    } catch (err) {
+  } catch {
       // Unknown blob type - return as JSON fallback
       return { type: 'json', data: { success: false, message: 'Unsupported download response' } };
     }

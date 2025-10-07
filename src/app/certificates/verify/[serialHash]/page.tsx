@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
@@ -29,10 +29,11 @@ export default function CertificateVerifyPage({ params }: CertificateVerifyPageP
       setError('');
       const response = await progressAPI.verifyCertificate(hash);
       setVerification(response.data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Verification failed:', err);
-      const errorMessage = err.response?.data?.message || 'Failed to verify certificate';
-      setError(errorMessage);
+      const resp = err as unknown as { response?: { data?: { message?: string } } } | null;
+      const msg = err instanceof Error ? err.message : resp?.response?.data?.message || 'Failed to verify certificate';
+      setError(msg);
       setVerification({ valid: false });
     } finally {
       setIsLoading(false);

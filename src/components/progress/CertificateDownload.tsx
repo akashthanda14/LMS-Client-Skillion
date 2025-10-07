@@ -16,17 +16,28 @@ export function CertificateDownload({ enrollmentId, courseTitle }: CertificateDo
   const [error, setError] = useState<string>('');
   const [showPreview, setShowPreview] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string>('');
-  const [jsonPreview, setJsonPreview] = useState<any>(null);
+  const [jsonPreview, setJsonPreview] = useState<unknown>(null);
+  const [info, setInfo] = useState<string>('');
 
   const handleDownload = async () => {
     try {
       setIsDownloading(true);
       setError('');
 
+      // Request generation on server if supported (idempotent)
+      try {
+        const genResp = await progressAPI.generateCertificate(enrollmentId);
+        if (genResp?.success) {
+          setInfo(genResp.message || 'Generation queued');
+        }
+      } catch (_genErr: unknown) {
+        // ignore - backend may not support generate endpoint; continue to poll
+      }
+
       // Wait for certificate metadata to be available (worker may be asynchronous)
       try {
         await progressAPI.waitForCertificate(enrollmentId, { intervalMs: 2500, timeoutMs: 60000 });
-      } catch (pollErr: any) {
+      } catch (_pollErr: unknown) {
         // If still not available, show friendly message and let user preview later
         setError('Certificate is still being generated. Please try again in a few moments.');
         return;
@@ -53,9 +64,12 @@ export function CertificateDownload({ enrollmentId, courseTitle }: CertificateDo
         setError('PDF generation not implemented on server; previewing certificate data below.');
         setJsonPreview(result.data);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Download failed:', err);
-      setError(err.response?.data?.message || 'Failed to download certificate');
+      const message = typeof err === 'object' && err !== null && 'response' in err
+        ? ((err as any).response?.data?.message as string | undefined)
+        : undefined;
+      setError(message || 'Failed to download certificate');
     } finally {
       setIsDownloading(false);
     }
@@ -66,10 +80,20 @@ export function CertificateDownload({ enrollmentId, courseTitle }: CertificateDo
       setIsDownloading(true);
       setError('');
 
+      // Request generation on server if supported (idempotent)
+      try {
+        const genResp = await progressAPI.generateCertificate(enrollmentId);
+        if (genResp?.success) {
+          setInfo(genResp.message || 'Generation queued');
+        }
+      } catch (_genErr: unknown) {
+        // ignore - backend may not support generate endpoint; continue to poll
+      }
+
       // Ensure certificate exists before attempting preview (avoid 404s while worker runs)
       try {
         await progressAPI.waitForCertificate(enrollmentId, { intervalMs: 2500, timeoutMs: 60000 });
-      } catch (pollErr: any) {
+      } catch (_pollErr: unknown) {
         setError('Certificate is still being generated. Please try preview after a short while.');
         return;
       }
@@ -82,9 +106,12 @@ export function CertificateDownload({ enrollmentId, courseTitle }: CertificateDo
         setJsonPreview(result.data);
         setShowPreview(true);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Preview failed:', err);
-      setError(err.response?.data?.message || 'Failed to load certificate');
+      const message = typeof err === 'object' && err !== null && 'response' in err
+        ? ((err as any).response?.data?.message as string | undefined)
+        : undefined;
+      setError(message || 'Failed to load certificate');
     } finally {
       setIsDownloading(false);
     }
@@ -137,6 +164,15 @@ export function CertificateDownload({ enrollmentId, courseTitle }: CertificateDo
           className="text-sm text-red-600 mt-2"
         >
           {error}
+        </motion.p>
+      )}
+      {info && !error && (
+        <motion.p
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-sm text-blue-600 mt-2"
+        >
+          {info}
         </motion.p>
       )}
 

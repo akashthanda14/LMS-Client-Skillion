@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useProgress } from '@/hooks/useProgress';
+import { CertificateDownload } from '@/components/progress/CertificateDownload';
 import { useRouter } from 'next/navigation';
 
 export default function MyCoursesPage() {
@@ -155,17 +156,33 @@ export default function MyCoursesPage() {
                         </div>
                       )}
 
-                      {/* Action Button */}
-                      <Button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          router.push(`/courses/${enrollment.course.id}`);
-                        }}
-                        className="w-full mt-4"
-                        variant={enrollment.progress >= 100 ? 'outline' : 'default'}
-                      >
-                        {enrollment.progress >= 100 ? 'View Certificate' : 'Continue Learning'}
-                      </Button>
+                      {/* Actions */}
+                      {enrollment.progress >= 100 ? (
+                        <div className="flex flex-col gap-2 mt-4">
+                          <CertificateDownload enrollmentId={enrollment.id} courseTitle={enrollment.course.title} />
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(`/courses/${enrollment.course.id}`);
+                            }}
+                            className="w-full"
+                            variant="outline"
+                          >
+                            View Course
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/courses/${enrollment.course.id}`);
+                          }}
+                          className="w-full mt-4"
+                          variant="default"
+                        >
+                          Continue Learning
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </Card>

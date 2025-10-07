@@ -63,25 +63,27 @@ interface AuthActions {
   syncTokenToCookie: () => boolean;
 }
 
-// Implementation of a persist middleware
-function persist<T>(
-    createStore: (set: any, get: any) => T,
+// Implementation of a persist middleware with narrowed types
+type StorageLike = { getItem: (name: string) => string | null; setItem: (name: string, value: string) => void };
+
+function persist<TState>(
+    createStore: (set: (partial: Partial<TState> | ((s: TState) => Partial<TState>)) => void, get: () => TState) => TState,
     options: {
         name: string;
-        storage: { getItem: (name: string) => any; setItem: (name: string, value: string) => void };
-        partialize?: (state: any) => any;
-        onRehydrateStorage?: () => (state: any, error: any) => void;
+        storage: StorageLike;
+        partialize?: (state: TState) => Partial<TState>;
+        onRehydrateStorage?: () => (state: Partial<TState> | null, error: unknown) => void;
     }
 ) {
-    return (set: any, get: any) => {
+    return (set: (partial: Partial<TState> | ((s: TState) => Partial<TState>)) => void, get: () => TState) => {
         // Load persisted state
         let hydrated = false;
-        let persistedState: any = {};
+        let persistedState: Partial<TState> | null = null;
         
         try {
             const storedState = options.storage.getItem(options.name);
             if (storedState) {
-                persistedState = JSON.parse(storedState);
+                persistedState = JSON.parse(storedState) as Partial<TState>;
                 hydrated = true;
             }
         } catch (e) {
@@ -89,9 +91,9 @@ function persist<T>(
         }
         
         // Create the original store with a modified setter
-        const store = createStore((state: any) => {
+        const store = createStore((state: Partial<TState> | ((s: TState) => Partial<TState>)) => {
             // Call the original set
-            set(state);
+            set(state as Partial<TState>);
             
             // Persist to storage
             try {
@@ -108,7 +110,7 @@ function persist<T>(
         
         // If we have persisted state, apply it once
         if (hydrated && persistedState) {
-            set(persistedState);
+            set(persistedState as Partial<TState>);
         }
         
         // Call the rehydration callback if provided
@@ -125,11 +127,11 @@ function persist<T>(
 }
 
 // Helper to create JSON storage
-const createJSONStorage = (getStorage: () => Storage) => ({
+const createJSONStorage = (getStorage: () => Storage): StorageLike => ({
     getItem: (name: string) => {
         try {
             return getStorage().getItem(name);
-        } catch (e) {
+        } catch {
             return null;
         }
     },
@@ -520,7 +522,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
 );
 // Simple store factory function to replace zustand
 function create<T extends object>() {
-    return (creator: (set: any, get: any) => T) => {
+    return (creator: (set: (partial: Partial<T> | ((s: T) => Partial<T>)) => void, get: () => T) => T) => {
         const state = {} as T;
         const subscribers = new Set<() => void>();
         

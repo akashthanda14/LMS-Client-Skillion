@@ -1,6 +1,14 @@
 import { useState, useCallback } from 'react';
 import { lessonAPI, CompleteLessonResponse } from '@/lib/api';
 
+const getErrorMessage = (err: unknown, fallback = 'Failed to mark lesson as complete') => {
+  if (err instanceof Error) return err.message;
+  const resp = err as unknown as { response?: { data?: { message?: string }, status?: number } } | null;
+  return resp?.response?.data?.message ?? fallback;
+}
+
+const getStatus = (err: unknown) => (err as any)?.response?.status ?? null;
+
 interface UseLessonCompletionReturn {
   completeLesson: (lessonId: string) => Promise<CompleteLessonResponse | null>;
   isCompleting: boolean;
@@ -27,17 +35,17 @@ export function useLessonCompletion(onSuccess?: (data: CompleteLessonResponse) =
       }
 
       return response;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to complete lesson:', err);
-      
+
       // Retry on network errors or 5xx
-      if (retries > 0 && (!err.response || err.response.status >= 500)) {
+      const status = getStatus(err);
+      if (retries > 0 && (!status || status >= 500)) {
         await new Promise(resolve => setTimeout(resolve, 200));
         return completeLesson(lessonId, retries - 1);
       }
 
-      const errorMessage = err.response?.data?.message || 'Failed to mark lesson as complete';
-      setError(errorMessage);
+      setError(getErrorMessage(err, 'Failed to mark lesson as complete'));
       return null;
     } finally {
       setIsCompleting(false);

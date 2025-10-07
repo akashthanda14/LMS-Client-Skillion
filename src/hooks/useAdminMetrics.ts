@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { adminAPI, type AdminMetrics } from '@/lib/api';
 
+const getErrorMessage = (err: unknown, fallback = 'Failed to load metrics') => {
+  if (err instanceof Error) return err.message;
+  const resp = err as unknown as { response?: { data?: { message?: string } } } | null;
+  return resp?.response?.data?.message ?? fallback;
+}
+
 interface UseAdminMetricsReturn {
   metrics: AdminMetrics | null;
   isLoading: boolean;
@@ -22,9 +28,10 @@ export function useAdminMetrics(): UseAdminMetricsReturn {
       setError(null);
       const response = await adminAPI.getMetrics();
       setMetrics(response.data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to fetch metrics:', err);
-      setError(err.response?.data?.message || 'Failed to load metrics');
+      const msg = getErrorMessage(err, 'Failed to load metrics');
+      setError(msg);
     } finally {
       setIsLoading(false);
     }

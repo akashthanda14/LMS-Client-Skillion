@@ -10,7 +10,7 @@ export function useTranscriptPolling(lessonId: string, initialTranscript?: strin
   const [progress, setProgress] = useState<number | undefined>(undefined);
   const [isPolling, setIsPolling] = useState<boolean>(false);
   const [attempts, setAttempts] = useState<number>(initialTranscript ? 0 : 0);
-  const [error, setError] = useState<any>(null);
+  const [error, setError] = useState<unknown>(null);
 
   const controllerRef = useRef<AbortController | null>(null);
   const timeoutRef = useRef<number | null>(null);
@@ -29,13 +29,7 @@ export function useTranscriptPolling(lessonId: string, initialTranscript?: strin
     return true;
   }, []);
 
-  const decideInterval = (attempt: number) => {
-    if (attempt < 10) return 3000;
-    if (attempt < 30) return 5000;
-    return 10000;
-  };
-
-  const fetchOnce = useCallback(async (signal?: AbortSignal) => {
+  const fetchOnce = useCallback(async () => {
     try {
       const data = await getTranscriptStatus(lessonId);
       if (!isMounted.current) return null;
@@ -43,7 +37,7 @@ export function useTranscriptPolling(lessonId: string, initialTranscript?: strin
   setProgress(typeof data.progress === 'number' ? data.progress : undefined);
       if (data.transcript) setTranscript(data.transcript);
       return data;
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (!isMounted.current) return null;
       setError(err);
       return null;
@@ -66,6 +60,12 @@ export function useTranscriptPolling(lessonId: string, initialTranscript?: strin
     setAttempts(0);
     setError(null);
 
+    const decideInterval = (attempt: number) => {
+      if (attempt < 10) return 3000;
+      if (attempt < 30) return 5000;
+      return 10000;
+    };
+
     let attempt = 0;
     while (isMounted.current && attempt < maxAttempts) {
       if (!shouldPoll()) {
@@ -75,7 +75,7 @@ export function useTranscriptPolling(lessonId: string, initialTranscript?: strin
 
       controllerRef.current = new AbortController();
       try {
-        const data = await fetchOnce(controllerRef.current.signal as any);
+        const data = await fetchOnce();
         attempt += 1;
         setAttempts(attempt);
 
@@ -85,7 +85,7 @@ export function useTranscriptPolling(lessonId: string, initialTranscript?: strin
           stopPolling();
           return;
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
         setError(e);
       }
 
@@ -100,7 +100,7 @@ export function useTranscriptPolling(lessonId: string, initialTranscript?: strin
 
     setIsPolling(false);
     if (attempt >= maxAttempts) setStatus('failed');
-  }, [decideInterval, fetchOnce, initialTranscript, maxAttempts, shouldPoll, stopPolling]);
+  }, [fetchOnce, initialTranscript, maxAttempts, shouldPoll, stopPolling]);
 
   useEffect(() => {
     if (initialTranscript) {
@@ -115,7 +115,7 @@ export function useTranscriptPolling(lessonId: string, initialTranscript?: strin
     return () => {
       stopPolling();
     };
-  }, [initialTranscript]);
+  }, [initialTranscript, startPolling, stopPolling]);
 
   return { status, transcript, progress, isPolling, attempts, error, startPolling, stopPolling } as const;
 }

@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { progressAPI, GetProgressResponse } from '@/lib/api';
 
+const getErrorMessage = (err: unknown, fallback = 'Failed to load progress') => {
+  if (err instanceof Error) return err.message;
+  const resp = err as unknown as { response?: { data?: { message?: string } } } | null;
+  return resp?.response?.data?.message ?? fallback;
+}
+
 interface UseProgressReturn {
   progress: GetProgressResponse | null;
   isLoading: boolean;
@@ -23,9 +29,9 @@ export function useProgress(): UseProgressReturn {
       setError(null);
       const data = await progressAPI.getProgress();
       setProgress(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to fetch progress:', err);
-      setError(err.response?.data?.message || 'Failed to load progress');
+      setError(getErrorMessage(err, 'Failed to load progress'));
     } finally {
       setIsLoading(false);
     }

@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { courseAPI, CourseDetail } from '@/lib/api';
 
+const getErrorMessage = (err: unknown, fallback = 'Failed to load course') => {
+  if (err instanceof Error) return err.message;
+  const resp = err as unknown as { response?: { data?: { message?: string } } } | null;
+  return resp?.response?.data?.message ?? fallback;
+}
+
 interface UseCourseReturn {
   course: CourseDetail | null;
   isLoading: boolean;
@@ -29,9 +35,9 @@ export function useCourse(courseId: string | null): UseCourseReturn {
       setError(null);
       const data = await courseAPI.getCourseById(courseId);
       setCourse(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to fetch course:', err);
-      setError(err.response?.data?.message || 'Failed to load course');
+      setError(getErrorMessage(err, 'Failed to load course'));
     } finally {
       setIsLoading(false);
     }

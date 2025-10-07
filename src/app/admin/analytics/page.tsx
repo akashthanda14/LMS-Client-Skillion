@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Loader2, AlertCircle, TrendingUp, TrendingDown, Users, BookOpen, Award, Activity } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertCircle, TrendingUp, TrendingDown } from 'lucide-react';
 import { AuthenticatedLayout } from '@/components/auth/AuthenticatedLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -76,7 +76,19 @@ export default function AdminAnalyticsPage() {
     );
   }
 
-  const GrowthCard = ({ title, icon: Icon, data, color }: any) => {
+  interface GrowthCardProps {
+    title: string;
+    icon: React.ComponentType<{ className?: string }>; // lucide icons
+    data: {
+      current: number;
+      previous: number;
+      growth: number;
+      growthRate: string;
+    };
+    color: { bg: string; text: string };
+  }
+
+  const GrowthCard: React.FC<GrowthCardProps> = ({ title, icon: Icon, data, color }) => {
     const isPositive = parseFloat(data.growthRate) >= 0;
     const TrendIcon = isPositive ? TrendingUp : TrendingDown;
 

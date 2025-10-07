@@ -118,6 +118,8 @@ export interface ApiError {
   message: string;
 }
 
+type AxiosLikeError = { response?: { data?: ApiError }; message?: string };
+
 /**
  * Register a new user with email or phone
  * Also used for resending OTP
@@ -126,14 +128,15 @@ export const registerUser = async (data: RegisterRequest): Promise<RegisterRespo
   try {
     const response = await apiClient.post<RegisterResponse>('/api/auth/register', data);
     return response.data;
-  } catch (error: any) {
-    if (error.response?.data) {
-      throw error.response.data;
+  } catch (err: unknown) {
+    const e = err as AxiosLikeError;
+    if (e.response?.data) {
+      throw e.response.data;
     }
     throw {
       success: false,
-      message: error.message || 'Network error. Please check your connection.',
-    };
+      message: e.message || 'Network error. Please check your connection.',
+    } as ApiError;
   }
 };
 
@@ -147,14 +150,15 @@ export const verifyEmailOTP = async (email: string, otp: string): Promise<Verifi
       otp,
     });
     return response.data;
-  } catch (error: any) {
-    if (error.response?.data) {
-      throw error.response.data;
+  } catch (err: unknown) {
+    const e = err as AxiosLikeError;
+    if (e.response?.data) {
+      throw e.response.data;
     }
     throw {
       success: false,
-      message: error.message || 'Network error. Please check your connection.',
-    };
+      message: e.message || 'Network error. Please check your connection.',
+    } as ApiError;
   }
 };
 
@@ -168,14 +172,15 @@ export const verifyPhoneOTP = async (phoneNumber: string, otp: string): Promise<
       otp,
     });
     return response.data;
-  } catch (error: any) {
-    if (error.response?.data) {
-      throw error.response.data;
+  } catch (err: unknown) {
+    const e = err as AxiosLikeError;
+    if (e.response?.data) {
+      throw e.response.data;
     }
     throw {
       success: false,
-      message: error.message || 'Network error. Please check your connection.',
-    };
+      message: e.message || 'Network error. Please check your connection.',
+    } as ApiError;
   }
 };
 
@@ -186,14 +191,15 @@ export const completeProfile = async (profileData: CompleteProfileRequest): Prom
   try {
     const response = await apiClient.post<CompleteProfileResponse>('/api/auth/complete-profile', profileData);
     return response.data;
-  } catch (error: any) {
-    if (error.response?.data) {
-      throw error.response.data;
+  } catch (err: unknown) {
+    const e = err as AxiosLikeError;
+    if (e.response?.data) {
+      throw e.response.data;
     }
     throw {
       success: false,
-      message: error.message || 'Network error. Please check your connection.',
-    };
+      message: e.message || 'Network error. Please check your connection.',
+    } as ApiError;
   }
 };
 

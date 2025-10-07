@@ -12,7 +12,7 @@ type StorageStrategy = 'memory' | 'localStorage' | 'sessionStorage';
 
 // In-memory storage
 let memoryToken: string | null = null;
-let memoryUser: any = null;
+let memoryUser: Record<string, unknown> | null = null;
 
 /**
  * Get configured storage strategy from environment
@@ -99,7 +99,7 @@ export const clearToken = (): void => {
 /**
  * Store user data
  */
-export const setUser = (user: any): void => {
+export const setUser = (user: Record<string, unknown>): void => {
   const strategy = getStorageStrategy();
   
   switch (strategy) {
@@ -123,20 +123,30 @@ export const setUser = (user: any): void => {
 /**
  * Retrieve user data
  */
-export const getUser = (): any | null => {
+export const getUser = (): Record<string, unknown> | null => {
   const strategy = getStorageStrategy();
   
   switch (strategy) {
     case 'localStorage':
       if (typeof window !== 'undefined') {
         const userData = localStorage.getItem('authUser');
-        return userData ? JSON.parse(userData) : null;
+        try {
+          return userData ? JSON.parse(userData) as Record<string, unknown> : null;
+        } catch (e) {
+          console.error('Failed to parse stored user JSON', e);
+          return null;
+        }
       }
       return null;
     case 'sessionStorage':
       if (typeof window !== 'undefined') {
         const userData = sessionStorage.getItem('authUser');
-        return userData ? JSON.parse(userData) : null;
+        try {
+          return userData ? JSON.parse(userData) as Record<string, unknown> : null;
+        } catch (e) {
+          console.error('Failed to parse stored user JSON', e);
+          return null;
+        }
       }
       return null;
     case 'memory':

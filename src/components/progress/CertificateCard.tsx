@@ -36,8 +36,19 @@ export function CertificateCard({ certificate }: CertificateCardProps) {
         <div className="mt-4 flex items-center gap-3">
           {certificate.enrollment?.id ? (
             <CertificateDownload enrollmentId={certificate.enrollment.id} courseTitle={certificate.enrollment.course?.title || 'course'} />
+          ) : certificate.imageUrl || (certificate as any).certificateUrl ? (
+            // If enrollment id is missing but an image/certificate URL exists, allow viewing it
+            <Button
+              variant="outline"
+              onClick={() => {
+                const url = (certificate as any).certificateUrl || certificate.imageUrl;
+                if (url) window.open(url, '_blank');
+              }}
+            >
+              View Certificate
+            </Button>
           ) : (
-            <Button disabled variant="outline">No enrollment</Button>
+            <Button disabled variant="outline">No certificate available</Button>
           )}
 
           <Button asChild variant="ghost">

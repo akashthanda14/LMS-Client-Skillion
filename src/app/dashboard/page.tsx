@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { AuthenticatedLayout } from '@/components/auth/AuthenticatedLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
+import DashboardRecentCertificates from '@/components/progress/DashboardRecentCertificates';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -221,6 +222,16 @@ export default function DashboardPage() {
                   </ul>
                 </CardContent>
               </Card>
+            </motion.div>
+
+            {/* Recent Certificates */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.4 }}
+              className="h-full"
+            >
+              <DashboardRecentCertificates />
             </motion.div>
           </div>
         </motion.div>

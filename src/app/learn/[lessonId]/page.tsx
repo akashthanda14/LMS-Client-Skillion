@@ -9,10 +9,10 @@ import { VideoPlayer } from '@/components/learn/VideoPlayer';
 import { ProgressTracker } from '@/components/learn/ProgressTracker';
 import { CompletionButton } from '@/components/learn/CompletionButton';
 import { LessonNavigation } from '@/components/learn/LessonNavigation';
-import { lessonAPI, courseAPI, LessonDetail, progressAPI } from '@/lib/api';
+import { lessonAPI, courseAPI, LessonDetail } from '@/lib/api';
 import { getApiBase } from '@/lib/apiBase';
 import { getToken } from '@/utils/tokenStorage';
-import { CertificateDownload } from '@/components/progress/CertificateDownload';
+import CoursePageCertificateBanner from '@/components/progress/CoursePageCertificateBanner';
 
 interface CourseProgress {
   progress: number;
@@ -34,11 +34,14 @@ export default function LearnPage() {
   const [lessons, setLessons] = useState<LessonDetail[]>([]);
   const [progress, setProgress] = useState<CourseProgress | null>(null);
   const [enrollmentId, setEnrollmentId] = useState<string | null>(null);
-  const [isPollingCert, setIsPollingCert] = useState(false);
-  const [certError, setCertError] = useState<string>('');
-  const [certificate, setCertificate] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
+
+  const getErrorMessage = (err: unknown, fallback = 'An error occurred') => {
+    if (err instanceof Error) return err.message;
+    const resp = err as unknown as { response?: { data?: { message?: string } } } | null;
+    return resp?.response?.data?.message ?? fallback;
+  }
 
   // Fetch lesson details and course lessons
   useEffect(() => {
@@ -100,9 +103,9 @@ export default function LearnPage() {
             totalLessons: enrollment.totalLessons
           });
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Failed to fetch lesson data:', err);
-        setError(err.response?.data?.message || 'Failed to load lesson. Please try again.');
+        setError(getErrorMessage(err, 'Failed to load lesson. Please try again.'));
       } finally {
         setIsLoading(false);
       }
@@ -124,7 +127,7 @@ export default function LearnPage() {
         totalLessons: enrollment.totalLessons
       });
   // persist enrollmentId if returned (some responses don't include id)
-  if ((enrollment as any).id) setEnrollmentId((enrollment as any).id);
+  if ((enrollment as { id?: string }).id) setEnrollmentId((enrollment as { id?: string }).id ?? null);
       
       // Update lesson completion status
       if (lesson) {
@@ -136,40 +139,8 @@ export default function LearnPage() {
         l.id === lessonId ? { ...l, isCompleted: true } : l
       ));
 
-      // If course is now complete, start polling for certificate
-      if (enrollment.progress >= 100) {
-        setCertError('');
-        setIsPollingCert(true);
-        setCertificate(null);
-
-        // use a cancellable pattern with a local flag
-        let cancelled = false;
-        const doPoll = async () => {
-          try {
-            const pollEnrollmentId = (enrollment as any).id || enrollmentId;
-            if (!pollEnrollmentId) throw new Error('Missing enrollment id for certificate polling');
-            const resp = await progressAPI.waitForCertificate(pollEnrollmentId, { intervalMs: 3000, timeoutMs: 60000 });
-            if (cancelled) return;
-            if (resp && resp.data && resp.data.certificate) {
-              setCertificate(resp.data.certificate);
-            } else {
-              setCertError('Certificate metadata returned unexpected shape');
-            }
-          } catch (err: any) {
-            if (cancelled) return;
-            // timeout or other errors
-            const msg = err?.message || err?.response?.data?.message || 'Failed to fetch certificate';
-            setCertError(msg.includes('timed out') ? 'Certificate generation timed out' : msg);
-          } finally {
-            if (!cancelled) setIsPollingCert(false);
-          }
-        };
-
-        doPoll();
-
-        // optional: expose cancel via closure by returning a function (not used here)
-      }
-    } catch (err: any) {
+  // Certificate generation/polling is handled by the CoursePageCertificateBanner component.
+    } catch (err: unknown) {
       console.error('Failed to complete lesson:', err);
       throw err;
     }
@@ -307,53 +278,11 @@ export default function LearnPage() {
           />
         )}
 
-        {/* Certificate area */}
-        {enrollmentId && (
-          <div className="mt-6">
-            {isPollingCert && (
-              <div className="p-4 rounded-md bg-yellow-50 border border-yellow-200">
-                <div className="flex items-center gap-3">
-                  <Loader2 className="w-5 h-5 animate-spin text-yellow-600" />
-                  <div>
-                    <p className="font-medium">Generating certificate…</p>
-                    <p className="text-sm text-gray-600">This may take up to a minute.</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {certError && (
-              <div className="p-4 rounded-md bg-red-50 border border-red-200 mt-2">
-                <p className="text-red-700 font-medium">{certError}</p>
-                <div className="mt-2">
-                  <Button onClick={async () => {
-                    setCertError('');
-                    setIsPollingCert(true);
-                    try {
-                      const resp = await progressAPI.waitForCertificate(enrollmentId!, { intervalMs: 3000, timeoutMs: 60000 });
-                      if (resp?.data?.certificate) setCertificate(resp.data.certificate);
-                    } catch (e: any) {
-                      setCertError(e?.message || 'Retry failed');
-                    } finally {
-                      setIsPollingCert(false);
-                    }
-                  }} className="mt-2">Retry</Button>
-                </div>
-              </div>
-            )}
-
-            {certificate && (
-              <div className="mt-4 p-4 border rounded-md bg-white">
-                <h3 className="text-lg font-semibold">Certificate ready</h3>
-                <p className="text-sm text-gray-600">Issued: {new Date(certificate.issuedAt).toLocaleString()}</p>
-                <p className="text-sm text-gray-600">Serial: {certificate.serialHash}</p>
-                <div className="mt-3">
-                  <CertificateDownload enrollmentId={enrollmentId} courseTitle={lesson.title} />
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+        {/* Certificate area (wrapped by reusable component) */}
+        <CoursePageCertificateBanner
+          enrollmentId={enrollmentId}
+          progress={progress?.progress ?? 0}
+        />
       </div>
     </div>
   );

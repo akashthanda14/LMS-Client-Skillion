@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useReducer, useEffect, useCallback, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useCallback, ReactNode } from 'react';
 import Cookies from 'js-cookie';
 import { authAPI, User, LoginRequest, RegisterRequest } from '@/lib/api';
 
@@ -35,7 +35,7 @@ interface AuthState {
 type AuthAction = 
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_USER'; payload: { user: User; token: string } }
-  | { type: 'SET_PENDING_VERIFICATION'; payload: any }
+  | { type: 'SET_PENDING_VERIFICATION'; payload: Record<string, unknown> | null }
   | { type: 'CLEAR_AUTH' }
   | { type: 'SET_PROFILE_TOKEN'; payload: string };
 
@@ -137,7 +137,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         type: 'SET_USER',
         payload: { user: response.user, token }
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('checkAuth: failed', error);
       localStorage.removeItem('token');
       localStorage.removeItem('auth-user');

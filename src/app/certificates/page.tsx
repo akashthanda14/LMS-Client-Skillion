@@ -1,54 +1,70 @@
-"use client";
+"use client"
 
-import React, { useEffect, useState } from 'react';
-import { progressAPI, Certificate } from '@/lib/api';
-import { CertificateCard } from '@/components/progress/CertificateCard';
-import { AuthenticatedLayout } from '@/components/auth/AuthenticatedLayout';
-import { Loader2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react'
+import CertificateCard from '@/components/certificates/CertificateCard'
 
-export default function CertificatesPage() {
-  const [certificates, setCertificates] = useState<Certificate[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string>('');
+interface Certificate {
+  id: string
+  serialHash?: string
+  title?: string
+  issuedAt?: string
+  course?: { id: string; title: string }
+  enrollmentId?: string
+}
+
+export default function UserCertificatesPage() {
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [certs, setCerts] = useState<Certificate[]>([])
+  const [page, setPage] = useState(1)
+  const perPage = 12
 
   useEffect(() => {
-    const fetchCertificates = async () => {
-      try {
-        setIsLoading(true);
-  const response = await progressAPI.getUserCertificates();
-  setCertificates(response.data?.certificates || []);
-      } catch (err: any) {
-        console.error('Failed to load certificates', err);
-        setError(err.response?.data?.message || 'Failed to load certificates');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    let mounted = true
+    setLoading(true)
+    fetch('/api/certificates')
+      .then(async (res) => {
+        if (!res.ok) throw new Error(await res.text())
+        return res.json()
+      })
+      .then((data) => {
+        if (!mounted) return
+        setCerts(data.certificates || data || [])
+      })
+      .catch((err: unknown) => {
+        setError(err instanceof Error ? err.message : String(err))
+      })
+      .finally(() => mounted && setLoading(false))
 
-    fetchCertificates();
-  }, []);
+    return () => { mounted = false }
+  }, [])
+
+  if (loading) return <div className="p-6">Loading certificates…</div>
+  if (error) return <div className="p-6 text-red-600">{error}</div>
+
+  if (!certs || certs.length === 0) {
+    return <div className="p-6">No certificates earned yet.</div>
+  }
+
+  const start = (page - 1) * perPage
+  const paged = certs.slice(start, start + perPage)
 
   return (
-    <AuthenticatedLayout>
-      <div className="max-w-4xl mx-auto py-8">
-        <h1 className="text-2xl font-bold mb-6">My Certificates</h1>
-
-        {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin" />
-          </div>
-        ) : error ? (
-          <p className="text-red-600">{error}</p>
-        ) : certificates.length === 0 ? (
-          <p className="text-gray-600">You have not earned any certificates yet. Complete a course to receive one.</p>
-        ) : (
-          <div className="grid grid-cols-1 gap-4">
-            {certificates.map((c) => (
-              <CertificateCard key={c.id} certificate={c} />
-            ))}
-          </div>
-        )}
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">My Certificates</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {paged.map((c) => (
+          <CertificateCard key={c.id} certificate={c} />
+        ))}
       </div>
-    </AuthenticatedLayout>
-  );
+
+      {certs.length > perPage && (
+        <div className="mt-6 flex justify-center items-center gap-2">
+          <button disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))} className="px-3 py-1 bg-gray-200 rounded">Prev</button>
+          <div>Page {page}</div>
+          <button disabled={start + perPage >= certs.length} onClick={() => setPage((p) => p + 1)} className="px-3 py-1 bg-gray-200 rounded">Next</button>
+        </div>
+      )}
+    </div>
+  )
 }

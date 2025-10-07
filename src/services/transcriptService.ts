@@ -10,7 +10,9 @@ export async function getTranscriptStatus(lessonId: string) {
   return res.data.data;
 }
 
-export default {
+const transcriptService = {
   getLessonWithTranscript,
   getTranscriptStatus,
 };
+
+export default transcriptService;

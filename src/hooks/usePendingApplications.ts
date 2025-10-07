@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { adminAPI, type CreatorApplication } from '@/lib/api';
 
+const getErrorMessage = (err: unknown, fallback = 'Failed to load applications') => {
+  if (err instanceof Error) return err.message;
+  const resp = err as unknown as { response?: { data?: { message?: string } } } | null;
+  return resp?.response?.data?.message ?? fallback;
+}
+
 interface UsePendingApplicationsReturn {
   applications: CreatorApplication[];
   isLoading: boolean;
@@ -24,21 +30,21 @@ export function usePendingApplications(): UsePendingApplicationsReturn {
       setError(null);
       console.log('🔍 Fetching pending applications...');
       const response = await adminAPI.getApplicationsPending();
-      console.log('📦 Raw API response:', response);
+  console.log('📦 Raw API response:', response);
       
       // Handle both response formats:
       // 1. { success: true, data: { applications: [...] } }
       // 2. { success: true, applications: [...] }
-      const apps = response.data?.applications || (response as any).applications || [];
+  const apps = response.data?.applications || (response as unknown as { applications?: CreatorApplication[] }).applications || [];
       
       console.log('✅ Parsed applications:', apps);
       console.log('📊 Total applications:', apps.length);
       
       setApplications(apps);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('❌ Failed to fetch pending applications:', err);
-      console.error('Error response:', err.response?.data);
-      setError(err.response?.data?.message || 'Failed to load applications');
+      console.error('Error response:', (err as any)?.response?.data);
+      setError(getErrorMessage(err, 'Failed to load applications'));
     } finally {
       setIsLoading(false);
     }
@@ -56,7 +62,7 @@ export function usePendingApplications(): UsePendingApplicationsReturn {
     try {
       await adminAPI.approveApplication(id);
       // Success - keep optimistic update
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Rollback on error
       setApplications(originalApplications);
       throw err;
@@ -76,7 +82,7 @@ export function usePendingApplications(): UsePendingApplicationsReturn {
     try {
       await adminAPI.rejectApplication(id, { reason });
       // Success - keep optimistic update
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Rollback on error
       setApplications(originalApplications);
       throw err;

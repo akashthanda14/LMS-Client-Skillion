@@ -20,7 +20,17 @@ interface CourseActions {
   clearSelectedCourse: () => void;
 }
 
-export const useCourseStore = create<CourseState & CourseActions>((set: (arg0: { isLoading?: boolean; error?: any; courses?: Course[] | never[]; selectedCourse?: any; isEnrolling?: boolean; searchQuery?: string; selectedLevel?: string; }) => void, get: () => { searchQuery?: any; selectedLevel?: any; selectedCourse?: any; }) => ({
+// Helper to extract a user-friendly message from unknown errors
+function getErrorMessage(err: unknown, fallback = 'An error occurred'): string {
+  if (!err || typeof err !== 'object') return fallback;
+  const maybe = err as {
+    response?: { data?: { message?: string } };
+    message?: string;
+  };
+  return maybe.response?.data?.message ?? maybe.message ?? fallback;
+}
+
+export const useCourseStore = create<CourseState & CourseActions>((set: (arg0: { isLoading?: boolean; error?: string | null; courses?: Course[]; selectedCourse?: CourseDetail | null; isEnrolling?: boolean; searchQuery?: string; selectedLevel?: string; }) => void, get: () => { searchQuery?: string; selectedLevel?: string; selectedCourse?: CourseDetail | null; }) => ({
   // State
   courses: [],
   selectedCourse: null,
@@ -50,11 +60,12 @@ export const useCourseStore = create<CourseState & CourseActions>((set: (arg0: {
       }
       
       set({ courses, isLoading: false });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching courses:', error);
+      const message = getErrorMessage(error, 'Failed to fetch courses');
       set({ 
         courses: [], // Ensure courses is always an array
-        error: error.response?.data?.message || 'Failed to fetch courses',
+        error: message,
         isLoading: false 
       });
     }
@@ -65,9 +76,10 @@ export const useCourseStore = create<CourseState & CourseActions>((set: (arg0: {
       set({ isLoading: true, error: null });
       const course = await courseAPI.getCourseById(id);
       set({ selectedCourse: course, isLoading: false });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = getErrorMessage(error, 'Failed to fetch course details');
       set({ 
-        error: error.response?.data?.message || 'Failed to fetch course details',
+        error: message,
         isLoading: false 
       });
     }
@@ -88,9 +100,10 @@ export const useCourseStore = create<CourseState & CourseActions>((set: (arg0: {
       } else {
         set({ isEnrolling: false });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = getErrorMessage(error, 'Failed to enroll in course');
       set({ 
-        error: error.response?.data?.message || 'Failed to enroll in course',
+        error: message,
         isEnrolling: false 
       });
       throw error;
@@ -118,6 +131,8 @@ type StateCreator<T> = (
   get: () => T
 ) => T;
 
+// Allow `any` on selector return here because consumers rely on flexible selectors.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function create<T>(stateCreator: StateCreator<T>): (selector?: (state: T) => any) => T {
     let state: T;
     const listeners = new Set<() => void>();

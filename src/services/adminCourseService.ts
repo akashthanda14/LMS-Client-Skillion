@@ -1,23 +1,38 @@
 import { adminAPI } from '@/lib/api';
 
+// Safe nested property accessor for unknown responses
+function getNested<T>(obj: unknown, path: string[]): T | undefined {
+  let cur: unknown = obj;
+  for (const key of path) {
+    if (typeof cur !== 'object' || cur === null) return undefined;
+    cur = (cur as Record<string, unknown>)[key];
+  }
+  return cur as T | undefined;
+}
+
 // Normalize various adminAPI responses into a consistent shape:
 // { data: { courses: CourseForReview[], statusCounts?: { PENDING, PUBLISHED, ... } } }
 export const getCoursesForReview = async (status?: string) => {
-  let res: any;
+  let res: unknown;
   if (status === 'ALL' || typeof status === 'undefined') {
     res = await adminAPI.getCourses();
   } else if (status === 'PENDING') {
     res = await adminAPI.getCoursesPending();
+  } else if (status === 'PUBLISHED' || status === 'REJECTED') {
+    // Pass only the allowed status union
+    res = await adminAPI.getCourses(status as 'PUBLISHED' | 'REJECTED');
   } else {
-    res = await adminAPI.getCourses(status as any);
+    // Unknown status - fall back to listing all
+    res = await adminAPI.getCourses();
   }
 
-  // adminAPI may return either { success, data: { courses } } or { success, courses, statusCounts }
-  const r = res as any;
+  const courses = getNested<unknown[]>(res, ['data', 'courses']) ?? getNested<unknown[]>(res, ['courses']) ?? [];
+  const statusCounts = getNested<unknown>(res, ['data', 'statusCounts']) ?? getNested<unknown>(res, ['statusCounts']);
+
   const normalized = {
     data: {
-      courses: r?.data?.courses ?? r?.courses ?? [],
-      statusCounts: r?.data?.statusCounts ?? r?.statusCounts,
+      courses,
+      statusCounts,
     },
   };
 
@@ -25,21 +40,21 @@ export const getCoursesForReview = async (status?: string) => {
 };
 
 export const getPendingCourses = async () => {
-  const res2 = await adminAPI.getCoursesPending();
-  const r2 = res2 as any;
+  const res2: unknown = await adminAPI.getCoursesPending();
+  const courses = getNested<unknown[]>(res2, ['data', 'courses']) ?? getNested<unknown[]>(res2, ['applications']) ?? getNested<unknown[]>(res2, ['courses']) ?? [];
   return {
     data: {
-      courses: r2?.data?.courses ?? r2?.applications ?? r2?.courses ?? [],
+      courses,
     },
   };
 };
 
 export const getCourseForReview = async (courseId: string) => {
-  const res3 = await adminAPI.getCourseDetail(courseId);
-  const r3 = res3 as any;
+  const res3: unknown = await adminAPI.getCourseDetail(courseId);
+  const course = getNested<unknown>(res3, ['data', 'course']) ?? getNested<unknown>(res3, ['course']) ?? null;
   return {
     data: {
-      course: r3?.data?.course ?? r3?.course ?? null,
+      course,
     },
   };
 };

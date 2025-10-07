@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { courseAPI } from '@/lib/api'
-import type { CloudinaryUploadCredentials } from '@/lib/api'
+import type { CloudinaryUploadCredentials, CreateLessonRequest } from '@/lib/api'
 
 interface UploadState {
   uploading: boolean
@@ -75,7 +75,7 @@ export const useVideoUpload = (courseId: string) => {
               if (!url) return reject(new Error('Upload succeeded but Cloudinary response missing secure_url'))
               // Sometimes Cloudinary returns duration for video
               resolve(url)
-            } catch (err) {
+            } catch {
               reject(new Error('Failed to parse Cloudinary response'))
             }
           } else {
@@ -94,20 +94,19 @@ export const useVideoUpload = (courseId: string) => {
       setState((s) => ({ ...s, progress: 100 }))
 
       // 4. POST lesson metadata to backend
-      const lessonPayload = {
+      const lessonPayload: CreateLessonRequest = {
         title: payload.title,
         videoUrl: secureUrl,
         order: payload.order,
-        duration: payload.duration,
       }
 
-      const created = await courseAPI.createLesson(courseId, lessonPayload as any)
+      const created = await courseAPI.createLesson(courseId, lessonPayload)
       if (!created || !created.success) throw new Error('Failed to create lesson')
 
       setState({ uploading: false, progress: 100, error: null, successMessage: 'Lesson uploaded successfully' })
       return created
-    } catch (err: any) {
-      const msg = err?.message || String(err)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
       setState({ uploading: false, progress: 0, error: msg, successMessage: null })
       throw err
     }
