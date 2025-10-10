@@ -1,301 +1,138 @@
-# Features & Functionalities
+<!-- GitHub Profile README -->
 
-This project is a full-featured, production-ready learning management system.
+<h1 align="center">Hi 👋, I'm Akashdeep Thanda</h1>
+<h3 align="center">Backend‑first Full‑Stack Developer | API & Systems</h3>
 
-## 🚀 Core Functionalities
+<p align="center">
+  <a href="mailto:akashthanda14@gmail.com">
+    <img src="https://img.shields.io/badge/Email-akashthanda14%40gmail.com-red?style=for-the-badge&logo=gmail" />
+  </a>
+  <a href="https://linkedin.com/in/akashthanda14">
+    <img src="https://img.shields.io/badge/LinkedIn-Akashdeep%20Thanda-0A66C2?style=for-the-badge&logo=linkedin" />
+  </a>
+  <a href="https://akashdeep.site">
+    <img src="https://img.shields.io/badge/Portfolio-akashdeep.site-1E90FF?style=for-the-badge&logo=google-chrome" />
+  </a>
+  <img src="https://komarev.com/ghpvc/?username=akashthanda14&style=for-the-badge&color=blueviolet" />
+</p>
 
-- **User Authentication:**
-  - Secure registration and login (Email/Phone).
-  - JWT-based session management and Google OAuth 2.0.
-  - Full password lifecycle: Forgot/Reset password with OTP verification.
-  - User profile completion and updates.
-- **Roles & Access Control:**
-  - Pre-defined roles: **Admin**, **Instructor**, and **Learner**.
-  - Protected endpoints and granular access checks for role-based permissions.
-- **Course & Lesson Management:**
-  - Full CRUD (Create, Read, Update, Delete) for courses.
-  - Nested CRUD for lessons within courses.
-  - Rich lesson metadata: title, video URL, display order, and duration.
-- **Enrollments & Progress Tracking:**
-  - Seamless user enrollment into courses.
-  - Endpoints to track lesson completion and overall course progress.
-  - Idempotent progress updates.
-- **Automated Certificate Generation:**
-  - Asynchronous PDF certificate generation using a background queue.
-  - Secure download endpoint for learners.
-  - Public certificate verification system using a unique serial hash.
-- **Media & Transcription Pipeline:**
-  - Automated video transcription using a job queue.
-  - Polling endpoint to check transcription status.
-  - Cloudinary integration for robust video and image asset management.
-
-## 🛠️ Developer Experience & DevOps
-
-- **Database & ORM:**
-  - **Prisma** with **PostgreSQL** for a type-safe database layer, including schema and migrations.
-- **API Documentation:**
-  - **Swagger (OpenAPI)** specification automatically generated from controller-level YAML files.
-  - Interactive Swagger UI served at `/api/docs`.
-- **Background Jobs & Queues:**
-  - **BullMQ + Redis** for reliable, asynchronous job processing.
-  - Dedicated workers for certificate generation and transcription with retry/failure handling.
-- **Emails & Notifications:**
-  - Flexible email delivery via **Resend**, SMTP, or **Nodemailer**.
-- **Testing & Quality Assurance:**
-  - Scaffolding for unit and integration tests with **Jest**.
-  - Scripts for endpoint health checks and E2E smoke tests.
-- **Deployment & Configuration:**
-  - **Docker-ready** and configured for easy deployment on platforms like Render.
-  - Centralized environment configuration using `.env` files.
-
-## 📁 Project Structure
-
-```
-src/
-├── app/
-│   ├── (auth)/
-│   │   ├── login/page.tsx          # Login page
-│   │   └── register/page.tsx       # Registration page
-│   ├── courses/
-│   │   ├── [id]/page.tsx          # Course detail page
-│   │   └── page.tsx               # Course browsing page
-│   ├── dashboard/page.tsx          # Main dashboard
-│   ├── layout.tsx                  # Root layout
-│   ├── page.tsx                    # Landing page
-│   ├── my-courses/page.tsx         # User's enrolled courses
-│   ├── certificates/page.tsx       # User certificates list
-│   ├── certificates/verify/[serialHash]/page.tsx # Certificate verification
-│   ├── learn/[lessonId]/page.tsx   # Lesson player
-│   └── not-found.tsx               # 404 page
-├── components/
-│   ├── auth/
-│   │   ├── LoginForm.tsx          # Login form component
-│   │   ├── RegisterForm.tsx       # Registration form
-│   │   ├── Navigation.tsx         # Role-based navigation
-│   │   ├── ProtectedRoute.tsx     # Route protection wrapper
-│   │   └── AuthenticatedLayout.tsx # Authenticated layout
-│   ├── courses/
-│   │   ├── CourseCard.tsx         # Course card component
-│   │   ├── CourseGrid.tsx         # Course grid layout
-│   │   ├── CourseDetail.tsx       # Course detail display
-│   │   ├── CourseFilters.tsx      # Search and filter controls
-│   │   └── EnrollButton.tsx       # Enrollment functionality
-│   ├── progress/
-│   │   ├── CoursePageCertificateBanner.tsx # Certificate banner
-│   │   └── CertificateDownload.tsx # Download and preview control
-│   ├── certificates/
-│   │   ├── CertificateCard.tsx    # Certificate card
-│   │   └── CertificateDownloadButton.tsx # Download button
-│   └── ui/                        # ShadCN UI components
-├── hooks/
-│   ├── useDebounce.ts             # Debounce hook for search
-│   └── useTranscriptPolling.ts    # Polling hook for transcripts
-├── lib/
-│   ├── api.ts                     # API configuration & types
-│   ├── config.ts                  # App configuration
-│   ├── mockData.ts                # Mock course data
-│   └── utils.ts                   # Utility functions
-├── store/
-│   ├── authStore.ts               # Zustand auth store
-│   └── courseStore.ts             # Zustand course store
-└── middleware.ts                  # Next.js middleware
-```
-
-## 🔐 User Roles & Permissions
-
-### LEARNER
-- Access dashboard and personal learning content
-- Enroll in courses and track progress
-- View available courses
-
-### CREATOR
-- All learner permissions
-- Create and manage courses
-- Access creator studio and analytics
-
-### ADMIN
-- Full platform access
-- User management and content moderation
-- System administration tools
-
-## 🏃‍♂️ Getting Started
-
-### Prerequisites
-- Node.js 18+ 
-- Backend API running on `http://localhost:4000`
-
-### Installation
-
-1. **Clone and install dependencies:**
-```bash
-git clone <your-repo-url>
-cd microcourses
-npm install
-```
-
-2. **Set up environment variables:**
-```bash
-# Create .env.local file
-NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
-```
-
-3. **Start the development server:**
-```bash
-npm run dev
-```
-
-4. **Open your browser:**
-Navigate to [http://localhost:3000](http://localhost:3000)
-
-## 🔌 API Integration
-
-The frontend integrates with these backend endpoints:
-
-### Authentication Endpoints
-```
-POST /auth/register
-Body: { name: string, email: string, password: string }
-Returns: { token: string, user: User }
-
-POST /auth/login  
-Body: { email: string, password: string }
-Returns: { token: string, user: User }
-
-GET /auth/me
-Headers: { Authorization: "Bearer <token>" }
-Returns: User object with role
-```
-
-### Course and Enrollment Endpoints
-```
-GET /api/courses
-Returns: List of available courses
-
-GET /api/courses/:id
-Returns: Course details
-
-POST /api/enrollments
-Body: { courseId: string }
-Returns: Enrollment object
-
-GET /api/enrollments/:id/progress
-Returns: Progress data for enrollment
-
-POST /api/enrollments/:id/certificate/generate
-Returns: Certificate generation status
-
-GET /api/enrollments/:id/certificate
-Returns: Certificate metadata
-
-GET /api/enrollments/:id/certificate/download
-Returns: PDF blob for certificate
-```
-
-### Certificate Endpoints
-```
-GET /api/certificates
-Returns: List of user's certificates
-
-GET /api/certificates/verify/:serialHash
-Returns: Certificate verification data
-```
-
-### User Types
-```typescript
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'LEARNER' | 'CREATOR' | 'ADMIN';
-  createdAt: string;
-  updatedAt: string;
-}
-```
-
-## 🎨 UI Components
-
-Built with ShadCN UI components for consistency:
-- **Forms**: Input, Label, Button with validation
-- **Layout**: Card, Navigation Menu
-- **Feedback**: Custom Toast notifications
-- **Animation**: Framer Motion for smooth transitions
-- **Certificates**: CertificateCard, CertificateDownload, CoursePageCertificateBanner for certificate management
-
-## 🔄 State Management
-
-### Auth Store (Zustand)
-```typescript
-interface AuthStore {
-  user: User | null;
-  token: string | null;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-  login: (credentials) => Promise<void>;
-  register: (data) => Promise<void>;
-  logout: () => void;
-  checkAuth: () => Promise<void>;
-}
-```
-
-## 🛡 Security Features
-
-- **JWT Token Management**: Automatic token refresh and storage
-- **Route Protection**: Middleware-based authentication
-- **Role-Based Access**: Component-level permission checks
-- **Secure Headers**: CORS and security headers configured
-- **Input Validation**: Zod schemas for all forms
-- **Certificate Verification**: Public verification of certificates by serial hash
-
-## 🚀 Deployment
-
-### Vercel (Recommended)
-```bash
-npm run build
-vercel --prod
-```
-
-### Docker
-```bash
-docker build -t microcourses .
-docker run -p 3000:3000 microcourses
-```
-
-## 🧪 Available Scripts
-
-```bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run start        # Start production server
-npm run lint         # Run ESLint
-```
-
-## 📱 Responsive Design
-
-The application is fully responsive with:
-- Mobile-first design approach
-- Breakpoints: `sm` (640px), `md` (768px), `lg` (1024px)
-- Touch-friendly interactions
-- Optimized for all screen sizes
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- [Next.js](https://nextjs.org/) - The React framework
-- [ShadCN UI](https://ui.shadcn.com/) - Beautiful UI components
-- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
-- [Framer Motion](https://www.framer.com/motion/) - Animation library
+<p align="center">
+  <img src="https://readme-typing-svg.herokuapp.com?size=22&color=00C0FF&center=true&vCenter=true&width=900&height=45&lines=Node.js+%2B+PostgreSQL+%2B+Prisma;Next.js+15+%2B+TypeScript+%2B+Tailwind;OTP%2C+OAuth%2C+RBAC%2C+Payments;RAG+%2B+Vector+DB+(Milvus)%2C+OpenAI;AWS+EC2%2FRDS%2FAmplify+%7C+Docker+%7C+Swagger" />
+</p>
 
 ---
 
-Built with ❤️ for modern learning experiences.
+### About
+- 4th year B.Tech CSE at Lovely Professional University; backend‑first builder shipping production features end‑to‑end  
+- Focused on API design, schema modeling, auth (OTP, OAuth, JWT, RBAC), payments, and clean documentation  
+- Interested in AI + Cloud; recently built a RAG pipeline with embeddings, vector search, and caching  
+
+---
+
+### Tech stack
+
+#### Languages
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black)
+![SQL](https://img.shields.io/badge/SQL-336791?logo=postgresql&logoColor=white)
+![C++](https://img.shields.io/badge/C%2B%2B-00599C?logo=cplusplus&logoColor=white)
+![Java](https://img.shields.io/badge/Java-007396?logo=oracle&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)
+
+#### Backend
+![Node.js](https://img.shields.io/badge/Node.js-339933?logo=node.js&logoColor=white)
+![Express](https://img.shields.io/badge/Express-000000?logo=express&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-2D3748?logo=prisma&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-47A248?logo=mongodb&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-DC382D?logo=redis&logoColor=white)
+![REST](https://img.shields.io/badge/REST-FF6F00?logo=swagger&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT-000000?logo=jsonwebtokens&logoColor=white)
+
+#### Frontend
+![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)
+![Next.js 15](https://img.shields.io/badge/Next.js%2015-000000?logo=nextdotjs&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind-06B6D4?logo=tailwindcss&logoColor=white)
+![MUI](https://img.shields.io/badge/MUI-007FFF?logo=mui&logoColor=white)
+![shadcn/ui](https://img.shields.io/badge/shadcn%2Fui-111111?logo=radixui&logoColor=white)
+
+#### Cloud & DevOps
+![AWS EC2](https://img.shields.io/badge/AWS%20EC2-FF9900?logo=amazon-ec2&logoColor=white)
+![AWS RDS](https://img.shields.io/badge/AWS%20RDS-527FFF?logo=amazonrds&logoColor=white)
+![AWS Amplify](https://img.shields.io/badge/AWS%20Amplify-FF9900?logo=awsamplify&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-2088FF?logo=githubactions&logoColor=white)
+![Swagger](https://img.shields.io/badge/Swagger-85EA2D?logo=swagger&logoColor=black)
+
+#### Services & Tools
+![Razorpay](https://img.shields.io/badge/Razorpay-0C86F8?logo=razorpay&logoColor=white)
+![Twilio](https://img.shields.io/badge/Twilio-F22F46?logo=twilio&logoColor=white)
+![Nodemailer](https://img.shields.io/badge/Nodemailer-1B1F23?logo=gmail&logoColor=white)
+![Milvus](https://img.shields.io/badge/Milvus-00B3B3?logo=milvus&logoColor=white)
+![OpenAI](https://img.shields.io/badge/OpenAI-412991?logo=openai&logoColor=white)
+![Postman](https://img.shields.io/badge/Postman-FF6C37?logo=postman&logoColor=white)
+![Git](https://img.shields.io/badge/Git-F05032?logo=git&logoColor=white)
+![VS Code](https://img.shields.io/badge/VS%20Code-007ACC?logo=visual-studio-code&logoColor=white)
+
+---
+
+### Selected projects
+- MicroCourse LMS Backend  
+  Node.js/Express on PostgreSQL with Prisma; BullMQ + Redis for background jobs; PDFKit certificates with public verification; SMTP/Resend mailers; Swagger/OpenAPI docs; ESM + dotenv; unit/integration tests (Jest/Vitest).  
+  Features: JWT + Google OAuth, role‑based access (Admin/Instructor/Learner), course/lesson CRUD, enrollments, progress tracking, idempotent queues (certificate/transcription), centralized validation/error handling, environment‑based config, and structured logging.  
+
+- Dolchico.com – E‑commerce  
+  Node.js/Express backend on PostgreSQL with Prisma; 60+ REST APIs with Swagger; OTP via SMS/email (Twilio + Nodemailer) with rate limits and replay protection; Google OAuth (Passport), JWT, RBAC; Razorpay order creation + signature verification; modular services/controllers powering checkout, inventory, reviews, and logging; deployed on AWS (EC2, RDS, Amplify).  
+
+- RAG (PDF Summarizer & Q&A)  
+  Retrieval‑Augmented Generation pipeline: chunking, embeddings, vector store, top‑k context injection; metadata tags for better retrieval; Node/Express REST API with JWT and React UI; containerized with Docker; tuned chunk size/overlap and response caching to reduce tokens and latency; uses OpenAI and a vector database.  
+
+---
+
+### Experience
+- Full‑stack Web Development Intern — Compass Technologies (Mar ’25 – Jun ’25)  
+  Worked with Git/GitHub, ESLint, agile flows, SonarQube, Swagger; built OTP auth via SMS/email with rate limits and replay protection; contributed UI polish using Tailwind and Framer Motion; stack included React, Node, Express, JWT, MongoDB/MySQL.  
+
+---
+
+### Achievements
+- 1st place, Web‑e‑Stan 2.0 Hackathon (700+ competitors) — Dec ’25  
+- Gold, Punjab State Youth Festival (Theatre) — Mar ’24  
+- Best Athlete and Head Boy (ICSE Zonal/Regional) — Jan ’21  
+
+---
+
+### Certifications
+- IBM Full Stack Developer — Coursera (Sep ’25)  
+- MERN Stack — Coding Spoon (Feb ’25)  
+- Cloud Computing — NPTEL (Nov ’24)  
+
+---
+
+### Education
+- B.Tech CSE — Lovely Professional University (Aug ’22 – Present), CGPA: 7.32  
+
+---
+
+### GitHub analytics
+
+<p align="center">
+  <img src="https://github-readme-stats.vercel.app/api?username=akashthanda14&show_icons=true&theme=tokyonight" height="160" />
+  <img src="https://github-readme-streak-stats.herokuapp.com/?user=akashthanda14&theme=tokyonight" height="160" />
+</p>
+
+<p align="center">
+  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=akashthanda14&layout=compact&theme=tokyonight" height="160" />
+</p>
+
+<p align="center">
+  <img src="https://github-readme-activity-graph.vercel.app/graph?username=akashthanda14&theme=react-dark&hide_border=true&area=true" />
+</p>
+
+<p align="center">
+  <img src="https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=akashthanda14&theme=tokyonight" />
+</p>
+
+---
+
+<h3 align="center">Let’s build useful, reliable software.</h3>
